@@ -47,7 +47,10 @@ try {
             <?php foreach ($jobs as $job): ?>
                 <div class="profile-section" style="padding: 0; overflow: hidden;">
                     <div style="display: flex; gap: var(--spacing-md); padding: var(--spacing-md);">
-                        <img src="<?php echo htmlspecialchars($job['image'] ?: 'https://via.placeholder.com/80'); ?>"
+                        <?php
+                        $jobImage = $job['image'] ?: 'https://ui-avatars.com/api/?name=' . urlencode($job['title']) . '&size=200&background=22C55E&color=fff&font-size=0.35&bold=true';
+                        ?>
+                        <img src="<?php echo htmlspecialchars($jobImage); ?>"
                             alt="<?php echo htmlspecialchars($job['title']); ?>"
                             style="width: 80px; height: 80px; border-radius: var(--radius-md); object-fit: cover;">
                         <div style="flex: 1;">

@@ -11,6 +11,7 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name'] ?? '');
     $bio = trim($_POST['bio'] ?? '');
+    $photo = trim($_POST['photo'] ?? '');
     $field = trim($_POST['field'] ?? '');
     $salary = intval($_POST['salary'] ?? 0);
     $workModel = $_POST['work_model'] ?? '';
@@ -23,12 +24,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 UPDATE users SET
                     name = ?,
                     bio = ?,
+                    photo = ?,
                     field = ?,
                     salary = ?,
                     workModel = ?
                 WHERE id = ?
             ");
-            $stmt->execute([$name, $bio, $field, $salary, $workModel, $_SESSION['user_id']]);
+            $stmt->execute([$name, $bio, $photo, $field, $salary, $workModel, $_SESSION['user_id']]);
 
             $success = 'הפרופיל עודכן בהצלחה!';
             $user = getCurrentUser(); // Refresh user data
@@ -90,10 +92,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     required style="padding-right: var(--spacing-md);">
             </div>
 
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom: var(--spacing-md);">
                 <label class="form-label">על עצמי</label>
                 <textarea name="bio" class="form-input" rows="3" placeholder="ספרו קצת על עצמכם..."
                     style="resize: none; padding-right: var(--spacing-md);"><?php echo htmlspecialchars($user['bio'] ?? ''); ?></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">תמונת פרופיל (אופציונלי)</label>
+                <div style="display: flex; align-items: center; gap: var(--spacing-md); margin-bottom: var(--spacing-sm);">
+                    <?php 
+                    $defaultPhoto = 'https://ui-avatars.com/api/?name=' . urlencode($user['name']) . '&size=100&background=22C55E&color=fff&bold=true';
+                    ?>
+                    <img id="photoPreview" src="<?php echo htmlspecialchars($user['photo'] ?: $defaultPhoto); ?>" 
+                         alt="תמונת פרופיל" 
+                         style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
+                    <p style="font-size: 0.875rem; color: var(--text-muted);">תמונה אוטומטית תיווצר מהשם אם לא תוזן</p>
+                </div>
+                <div class="input-wrapper">
+                    <i data-feather="link"></i>
+                    <input type="url" name="photo" id="photoUrl" class="form-input"
+                        value="<?php echo htmlspecialchars($user['photo'] ?? ''); ?>"
+                        placeholder="קישור לתמונה (לא חובה)"
+                        oninput="updatePhotoPreview(this.value)">
+                </div>
             </div>
         </div>
 
@@ -156,6 +178,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </a>
     </div>
 </main>
+
+<script>
+    const defaultPhoto = '<?php echo $defaultPhoto; ?>';
+    function updatePhotoPreview(url) {
+        const preview = document.getElementById('photoPreview');
+        if (url && url.trim()) {
+            preview.src = url;
+            preview.onerror = function() { this.src = defaultPhoto; };
+        } else {
+            preview.src = defaultPhoto;
+        }
+    }
+</script>
 
 <?php include 'includes/nav.php'; ?>
 <?php include 'includes/footer.php'; ?>

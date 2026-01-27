@@ -123,7 +123,9 @@ class SwipeDeck {
         const card = template.querySelector('.swipe-card');
 
         card.dataset.jobId = job.id;
-        card.querySelector('.job-card-image').src = job.image || 'https://via.placeholder.com/400x300';
+        // Auto-generate image from company name if none provided
+        const companyImage = job.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(job.company || job.title)}&size=400&background=22C55E&color=fff&font-size=0.4&bold=true`;
+        card.querySelector('.job-card-image').src = companyImage;
         card.querySelector('.job-card-image').alt = job.title;
         card.querySelector('.job-card-title').textContent = job.title;
         card.querySelector('.job-card-company').textContent = job.company;

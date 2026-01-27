@@ -160,26 +160,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <option value="">בחרו סוג</option>
                     <option value="משרה מלאה" <?php echo ($job['type'] ?? '') === 'משרה מלאה' ? 'selected' : ''; ?>>משרה
                         מלאה</option>
-                    <option value="משרה חלקית" <?php echo ($job['type'] ?? '') === 'משרה חלקית' ? 'selected' : ''; ?>
-                        >משרה חלקית</option>
+                    <option value="משרה חלקית" <?php echo ($job['type'] ?? '') === 'משרה חלקית' ? 'selected' : ''; ?>>משרה
+                        חלקית</option>
                     <option value="פרילנס" <?php echo ($job['type'] ?? '') === 'פרילנס' ? 'selected' : ''; ?>>פרילנס
                     </option>
                     <option value="היברידי" <?php echo ($job['type'] ?? '') === 'היברידי' ? 'selected' : ''; ?>>היברידי
                     </option>
-                    <option value="עבודה מהבית" <?php echo ($job['type'] ?? '') === 'עבודה מהבית' ? 'selected' : ''; ?>
-                        >עבודה מהבית</option>
+                    <option value="עבודה מהבית" <?php echo ($job['type'] ?? '') === 'עבודה מהבית' ? 'selected' : ''; ?>>
+                        עבודה מהבית</option>
                 </select>
             </div>
 
             <div class="form-group">
-                <label class="form-label">קישור לתמונה</label>
-                <div class="input-wrapper">
-                    <i data-feather="image"></i>
-                    <input type="url" name="image" class="form-input"
-                        value="<?php echo htmlspecialchars($job['image'] ?? ''); ?>"
-                        placeholder="https://example.com/image.jpg">
+                <label class="form-label">תמונה (אופציונלי)</label>
+                <div
+                    style="display: flex; align-items: center; gap: var(--spacing-md); margin-bottom: var(--spacing-sm);">
+                    <?php
+                    $previewImage = $job['image'] ?? '';
+                    $defaultImage = 'https://ui-avatars.com/api/?name=' . urlencode($user['company_name'] ?? $user['name']) . '&size=100&background=22C55E&color=fff&bold=true';
+                    ?>
+                    <img id="imagePreview" src="<?php echo htmlspecialchars($previewImage ?: $defaultImage); ?>"
+                        alt="תצוגה מקדימה"
+                        style="width: 60px; height: 60px; border-radius: var(--radius-md); object-fit: cover;">
+                    <p style="font-size: 0.875rem; color: var(--text-muted);">תמונה אוטומטית תיווצר אם לא תועלה תמונה
+                    </p>
                 </div>
-                <p class="form-hint">תמונה של המשרד או לוגו החברה</p>
+                <div class="input-wrapper">
+                    <i data-feather="link"></i>
+                    <input type="url" name="image" id="imageUrl" class="form-input"
+                        value="<?php echo htmlspecialchars($job['image'] ?? ''); ?>"
+                        placeholder="קישור לתמונה (לא חובה)" oninput="updateImagePreview(this.value)">
+                </div>
             </div>
         </div>
 
@@ -217,6 +228,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     </script>
 <?php endif; ?>
+
+<script>
+    const defaultImage = '<?php echo $defaultImage; ?>';
+    function updateImagePreview(url) {
+        const preview = document.getElementById('imagePreview');
+        if (url && url.trim()) {
+            preview.src = url;
+            preview.onerror = function () { this.src = defaultImage; };
+        } else {
+            preview.src = defaultImage;
+        }
+    }
+</script>
 
 <?php include '../includes/nav.php'; ?>
 <?php include '../includes/footer.php'; ?>
