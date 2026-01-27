@@ -53,11 +53,11 @@ const StepDot = styled.div`
         color: white;
       `
       : $active
-      ? `
+        ? `
         background-color: ${theme.colors.primary};
         color: white;
       `
-      : `
+        : `
         background-color: ${theme.colors.background};
         color: ${theme.colors.textMuted};
       `}
