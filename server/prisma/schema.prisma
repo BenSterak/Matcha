@@ -1,0 +1,125 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CANDIDATE
+  EMPLOYER
+}
+
+enum MatchStatus {
+  PENDING
+  LIKED
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String?
+  bio       String?  @db.Text
+  role      UserRole @default(CANDIDATE)
+
+  // Candidate-specific fields
+  field     String?
+  salary    Int?
+  workModel String? // office, remote, hybrid
+  photo     String? @db.Text
+
+  // Employer-specific fields
+  companyName String?
+  companyLogo String? @db.Text
+  companyBio  String? @db.Text
+  industry    String?
+  companySize String?
+
+  // Onboarding status
+  onboardingComplete Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  candidateMatches Match[]   @relation("CandidateMatches")
+  jobs             Job[]     @relation("EmployerJobs")
+  sentMessages     Message[] @relation("SentMessages")
+
+  @@map("users")
+}
+
+model Job {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String  @db.Text
+  location    String
+  salaryMin   Int?
+  salaryMax   Int?
+  salaryRange String? // For display: "15k-20k"
+  type        String // Full-time, Part-time, Contract
+  workModel   String? // office, remote, hybrid
+  tags        String? @db.Text // Comma separated tags
+  image       String? @db.Text
+  isActive    Boolean @default(true)
+
+  // Employer relation
+  employer   User @relation("EmployerJobs", fields: [employerId], references: [id])
+  employerId Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  matches Match[]
+
+  @@map("jobs")
+}
+
+model Match {
+  id          Int @id @default(autoincrement())
+  candidate   User @relation("CandidateMatches", fields: [candidateId], references: [id])
+  candidateId Int
+  job         Job  @relation(fields: [jobId], references: [id])
+  jobId       Int
+
+  // Swipe statuses
+  candidateStatus MatchStatus @default(PENDING) // PENDING, LIKED, REJECTED
+  employerStatus  MatchStatus @default(PENDING) // PENDING, APPROVED, REJECTED
+
+  // Match status
+  isMatched Boolean   @default(false)
+  matchedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Chat relation
+  messages Message[]
+
+  @@unique([candidateId, jobId])
+  @@map("matches")
+}
+
+model Message {
+  id       Int    @id @default(autoincrement())
+  content  String @db.Text
+  sender   User   @relation("SentMessages", fields: [senderId], references: [id])
+  senderId Int
+  match    Match  @relation(fields: [matchId], references: [id])
+  matchId  Int
+  isRead   Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@map("messages")
+}
