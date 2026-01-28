@@ -93,28 +93,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div class="form-group" style="margin-bottom: var(--spacing-md);">
-                <label class="form-label">על עצמי</label>
-                <textarea name="bio" class="form-input" rows="3" placeholder="ספרו קצת על עצמכם..."
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm);">
+                    <label class="form-label" style="margin: 0;">על עצמי</label>
+                    <button type="button" id="magicBtn" class="btn btn-sm" onclick="enhanceBio()"
+                            style="background: linear-gradient(135deg, #8B5CF6, #EC4899); color: white; font-size: 0.75rem; padding: 6px 12px;">
+                        <i data-feather="sparkles" style="width: 14px; height: 14px;"></i>
+                        שדרג עם AI
+                    </button>
+                </div>
+                <textarea name="bio" id="bioField" class="form-input" rows="3" placeholder="ספרו קצת על עצמכם..."
                     style="resize: none; padding-right: var(--spacing-md);"><?php echo htmlspecialchars($user['bio'] ?? ''); ?></textarea>
+                <p id="aiStatus" style="font-size: 0.75rem; color: var(--text-light); margin-top: var(--spacing-xs); display: none;"></p>
             </div>
 
             <div class="form-group">
                 <label class="form-label">תמונת פרופיל (אופציונלי)</label>
                 <div style="display: flex; align-items: center; gap: var(--spacing-md); margin-bottom: var(--spacing-sm);">
-                    <?php 
+                    <?php
                     $defaultPhoto = 'https://ui-avatars.com/api/?name=' . urlencode($user['name']) . '&size=100&background=22C55E&color=fff&bold=true';
                     ?>
-                    <img id="photoPreview" src="<?php echo htmlspecialchars($user['photo'] ?: $defaultPhoto); ?>" 
-                         alt="תמונת פרופיל" 
+                    <img id="photoPreview" src="<?php echo htmlspecialchars($user['photo'] ?: $defaultPhoto); ?>"
+                         alt="תמונת פרופיל"
                          style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
-                    <p style="font-size: 0.875rem; color: var(--text-muted);">תמונה אוטומטית תיווצר מהשם אם לא תוזן</p>
+                    <div>
+                        <p style="font-size: 0.875rem; color: var(--text-muted);">תמונה אוטומטית תיווצר מהשם אם לא תוזן</p>
+                    </div>
                 </div>
-                <div class="input-wrapper">
-                    <i data-feather="link"></i>
-                    <input type="url" name="photo" id="photoUrl" class="form-input"
-                        value="<?php echo htmlspecialchars($user['photo'] ?? ''); ?>"
-                        placeholder="קישור לתמונה (לא חובה)"
-                        oninput="updatePhotoPreview(this.value)">
+
+                <!-- Photo upload tabs -->
+                <div style="display: flex; gap: var(--spacing-sm); margin-bottom: var(--spacing-sm);">
+                    <button type="button" id="tabUpload" class="btn btn-sm btn-primary" onclick="showUploadTab()">
+                        <i data-feather="upload" style="width: 14px; height: 14px;"></i>
+                        העלאת קובץ
+                    </button>
+                    <button type="button" id="tabUrl" class="btn btn-sm btn-secondary" onclick="showUrlTab()">
+                        <i data-feather="link" style="width: 14px; height: 14px;"></i>
+                        קישור לתמונה
+                    </button>
+                </div>
+
+                <!-- File upload -->
+                <div id="uploadSection">
+                    <input type="file" id="avatarFile" accept="image/jpeg,image/png,image/gif,image/webp"
+                           style="display: none;" onchange="uploadAvatar(this)">
+                    <button type="button" class="btn btn-secondary btn-full" onclick="document.getElementById('avatarFile').click()">
+                        <i data-feather="image" style="width: 18px; height: 18px;"></i>
+                        בחרו תמונה מהמכשיר
+                    </button>
+                    <p style="font-size: 0.75rem; color: var(--text-light); margin-top: var(--spacing-xs); text-align: center;">
+                        JPEG, PNG, GIF, WebP - עד 5MB
+                    </p>
+                    <div id="uploadProgress" style="display: none; margin-top: var(--spacing-sm);">
+                        <div style="background: var(--border); border-radius: var(--radius-full); height: 4px; overflow: hidden;">
+                            <div id="progressBar" style="background: var(--primary); height: 100%; width: 0%; transition: width 0.3s;"></div>
+                        </div>
+                        <p id="uploadStatus" style="font-size: 0.75rem; color: var(--text-muted); margin-top: var(--spacing-xs); text-align: center;">מעלה...</p>
+                    </div>
+                </div>
+
+                <!-- URL input (hidden by default) -->
+                <div id="urlSection" style="display: none;">
+                    <div class="input-wrapper">
+                        <i data-feather="link"></i>
+                        <input type="url" name="photo" id="photoUrl" class="form-input"
+                            value="<?php echo htmlspecialchars($user['photo'] ?? ''); ?>"
+                            placeholder="קישור לתמונה (לא חובה)"
+                            oninput="updatePhotoPreview(this.value)">
+                    </div>
                 </div>
             </div>
         </div>
@@ -181,6 +226,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <script>
     const defaultPhoto = '<?php echo $defaultPhoto; ?>';
+
     function updatePhotoPreview(url) {
         const preview = document.getElementById('photoPreview');
         if (url && url.trim()) {
@@ -189,6 +235,138 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             preview.src = defaultPhoto;
         }
+    }
+
+    function showUploadTab() {
+        document.getElementById('uploadSection').style.display = 'block';
+        document.getElementById('urlSection').style.display = 'none';
+        document.getElementById('tabUpload').className = 'btn btn-sm btn-primary';
+        document.getElementById('tabUrl').className = 'btn btn-sm btn-secondary';
+    }
+
+    function showUrlTab() {
+        document.getElementById('uploadSection').style.display = 'none';
+        document.getElementById('urlSection').style.display = 'block';
+        document.getElementById('tabUpload').className = 'btn btn-sm btn-secondary';
+        document.getElementById('tabUrl').className = 'btn btn-sm btn-primary';
+    }
+
+    async function uploadAvatar(input) {
+        if (!input.files || !input.files[0]) return;
+
+        const file = input.files[0];
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        const progressDiv = document.getElementById('uploadProgress');
+        const progressBar = document.getElementById('progressBar');
+        const uploadStatus = document.getElementById('uploadStatus');
+
+        progressDiv.style.display = 'block';
+        progressBar.style.width = '0%';
+        uploadStatus.textContent = 'מעלה...';
+        uploadStatus.style.color = 'var(--text-muted)';
+
+        try {
+            // Simulate progress
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 10;
+                if (progress <= 90) {
+                    progressBar.style.width = progress + '%';
+                }
+            }, 100);
+
+            const response = await fetch('/api/upload.php?action=avatar', {
+                method: 'POST',
+                body: formData
+            });
+
+            clearInterval(progressInterval);
+            progressBar.style.width = '100%';
+
+            const data = await response.json();
+
+            if (data.success) {
+                uploadStatus.textContent = 'התמונה הועלתה בהצלחה!';
+                uploadStatus.style.color = 'var(--success)';
+                document.getElementById('photoPreview').src = data.url + '?t=' + Date.now();
+                document.getElementById('photoUrl').value = data.url;
+
+                setTimeout(() => {
+                    progressDiv.style.display = 'none';
+                }, 2000);
+            } else {
+                uploadStatus.textContent = data.error || 'שגיאה בהעלאה';
+                uploadStatus.style.color = 'var(--error)';
+                progressBar.style.background = 'var(--error)';
+            }
+        } catch (error) {
+            uploadStatus.textContent = 'שגיאה בהעלאה. נסו שוב.';
+            uploadStatus.style.color = 'var(--error)';
+            progressBar.style.background = 'var(--error)';
+        }
+
+        input.value = '';
+    }
+
+    async function enhanceBio() {
+        const bioField = document.getElementById('bioField');
+        const magicBtn = document.getElementById('magicBtn');
+        const aiStatus = document.getElementById('aiStatus');
+        const fieldSelect = document.querySelector('select[name="field"]');
+        const nameInput = document.querySelector('input[name="name"]');
+
+        const currentBio = bioField.value.trim();
+        const field = fieldSelect ? fieldSelect.value : '';
+        const name = nameInput ? nameInput.value : '';
+
+        // Disable button and show loading
+        magicBtn.disabled = true;
+        magicBtn.innerHTML = '<span class="loading-dots">מייצר...</span>';
+        aiStatus.style.display = 'block';
+        aiStatus.textContent = 'ה-AI עובד על השדרוג...';
+        aiStatus.style.color = 'var(--primary)';
+
+        try {
+            const response = await fetch('/api/ai.php?action=enhance_bio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bio: currentBio, field, name })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                bioField.value = data.enhanced_bio;
+                aiStatus.textContent = 'הטקסט שודרג בהצלחה! אל תשכחו לשמור.';
+                aiStatus.style.color = 'var(--success)';
+
+                // Highlight the textarea briefly
+                bioField.style.borderColor = 'var(--primary)';
+                bioField.style.boxShadow = '0 0 0 3px var(--primary-glow)';
+                setTimeout(() => {
+                    bioField.style.borderColor = '';
+                    bioField.style.boxShadow = '';
+                }, 2000);
+            } else {
+                aiStatus.textContent = data.error || 'שגיאה בשדרוג הטקסט';
+                aiStatus.style.color = 'var(--error)';
+            }
+        } catch (error) {
+            aiStatus.textContent = 'שגיאה בחיבור לשרת';
+            aiStatus.style.color = 'var(--error)';
+        }
+
+        // Re-enable button
+        magicBtn.disabled = false;
+        magicBtn.innerHTML = '<i data-feather="sparkles" style="width: 14px; height: 14px;"></i> שדרג עם AI';
+        feather.replace();
+
+        // Hide status after 5 seconds
+        setTimeout(() => {
+            aiStatus.style.display = 'none';
+        }, 5000);
     }
 </script>
 

@@ -5,6 +5,12 @@ requireRole('employer');
 
 $user = getCurrentUser();
 
+// Check if this is a new user
+$isNewUser = isset($_SESSION['new_user']) && $_SESSION['new_user'] === true;
+if ($isNewUser) {
+    unset($_SESSION['new_user']); // Clear the flag
+}
+
 // Get stats
 try {
     // Count jobs
@@ -39,7 +45,7 @@ try {
 <!-- Header -->
 <header class="header">
     <div style="width: 44px;"></div>
-    <img src="/assets/images/LOGO.jpeg" alt="Matcha" class="header-logo">
+    <img src="/assets/images/ICON.jpeg" alt="Matcha" class="header-logo">
     <a href="/profile.php" class="header-icon-btn">
         <i data-feather="user"></i>
     </a>
@@ -119,4 +125,116 @@ try {
 </main>
 
 <?php include '../includes/nav.php'; ?>
+
+<?php if ($isNewUser): ?>
+<!-- Welcome Modal for New Employers -->
+<div id="welcomeModal" class="modal-overlay" style="display: flex;">
+    <div class="modal-content welcome-modal">
+        <div class="welcome-modal-icon">
+            <i data-feather="check-circle"></i>
+        </div>
+        <h2>ברוכים הבאים, <?php echo htmlspecialchars($user['name']); ?>!</h2>
+        <p>תודה שהצטרפתם ל-Matcha! אנחנו שמחים שבחרתם בנו למצוא את העובדים המתאימים לחברה שלכם.</p>
+        <div class="welcome-tips">
+            <div class="welcome-tip">
+                <i data-feather="plus"></i>
+                <span>פרסמו משרה</span>
+            </div>
+            <div class="welcome-tip">
+                <i data-feather="users"></i>
+                <span>צפו במועמדים</span>
+            </div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="closeWelcomeModal()">
+            בואו נתחיל!
+        </button>
+    </div>
+</div>
+
+<style>
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--overlay);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: var(--spacing-lg);
+}
+
+.modal-content {
+    background: var(--surface);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-xl);
+    max-width: 380px;
+    width: 100%;
+    text-align: center;
+    animation: scaleIn 0.3s ease;
+}
+
+.welcome-modal-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--success-light);
+    color: var(--success);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--spacing-lg);
+}
+
+.welcome-modal-icon svg {
+    width: 40px;
+    height: 40px;
+}
+
+.welcome-modal h2 {
+    font-size: 1.5rem;
+    color: var(--secondary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.welcome-modal p {
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-lg);
+    line-height: 1.6;
+}
+
+.welcome-tips {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.welcome-tip {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    background: var(--background);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-full);
+}
+
+.welcome-tip svg {
+    width: 16px;
+    height: 16px;
+    color: var(--primary);
+}
+</style>
+
+<script>
+function closeWelcomeModal() {
+    document.getElementById('welcomeModal').style.display = 'none';
+}
+</script>
+<?php endif; ?>
+
 <?php include '../includes/footer.php'; ?>

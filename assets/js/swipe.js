@@ -284,21 +284,19 @@ class SwipeDeck {
     }
 
     async recordSwipe(jobId, direction) {
-        if (direction === 'right') {
-            try {
-                await fetch('/api/matches.php?action=swipe', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        jobId: jobId,
-                        action: 'like'
-                    })
-                });
-            } catch (error) {
-                console.error('Error recording swipe:', error);
-            }
+        try {
+            await fetch('/api/matches.php?action=swipe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    jobId: jobId,
+                    action: direction === 'right' ? 'like' : 'pass'
+                })
+            });
+        } catch (error) {
+            console.error('Error recording swipe:', error);
         }
 
         console.log(`Swiped ${direction} on job ${jobId}`);

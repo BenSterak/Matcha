@@ -56,6 +56,15 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
         <?php echo isset($pageTitle) ? $pageTitle . ' - Matcha' : 'Matcha - מצא את העבודה הבאה שלך'; ?>
     </title>
 
+    <!-- Google Analytics - Replace GA_MEASUREMENT_ID with your actual ID -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'GA_MEASUREMENT_ID');
+    </script>
+
     <link rel="stylesheet" href="/assets/css/style.css">
 
     <!-- Feather Icons -->

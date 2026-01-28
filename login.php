@@ -53,6 +53,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#2ECC71">
     <title>התחברות - Matcha</title>
+
+    <!-- Google Analytics - Replace GA_MEASUREMENT_ID with your actual ID -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'GA_MEASUREMENT_ID');
+    </script>
+
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
@@ -66,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="auth-content">
             <div class="auth-logo-container">
-                <img src="assets/images/LOGO.jpeg" alt="Matcha Logo" class="auth-logo">
+                <img src="assets/images/ICON.jpeg" alt="Matcha Logo" class="auth-logo">
                 <h1 class="auth-title">ברוכים השבים</h1>
                 <p class="auth-subtitle">התחברו כדי להמשיך את המסע התעסוקתי שלכם</p>
             </div>

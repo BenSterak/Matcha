@@ -96,6 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_id'] = $userId;
                 $_SESSION['user_role'] = $registerData['role'];
                 $_SESSION['user_name'] = $name;
+                $_SESSION['new_user'] = true; // Flag for welcome message
 
                 // Redirect based on role
                 if ($registerData['role'] === 'employer') {
@@ -127,6 +128,22 @@ if ($step == 2 && !isset($_SESSION['register'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#2ECC71">
     <title>הרשמה - Matcha</title>
+
+    <!-- Google Analytics - Replace GA_MEASUREMENT_ID with your actual ID -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'GA_MEASUREMENT_ID');
+
+        // Track registration page view
+        gtag('event', 'page_view', {
+            page_title: 'Registration - Step <?php echo $step; ?>',
+            page_location: window.location.href
+        });
+    </script>
+
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="https://unpkg.com/feather-icons"></script>
     <style>
@@ -163,7 +180,7 @@ if ($step == 2 && !isset($_SESSION['register'])) {
 
         <div class="auth-content">
             <div class="auth-logo-container">
-                <img src="assets/images/LOGO.jpeg" alt="Matcha Logo" class="auth-logo">
+                <img src="assets/images/ICON.jpeg" alt="Matcha Logo" class="auth-logo">
                 <h1 class="auth-title">
                     <?php echo $step == 1 ? 'הרשמה' : 'פרטים אישיים'; ?>
                 </h1>
@@ -321,7 +338,7 @@ if ($step == 2 && !isset($_SESSION['register'])) {
                         <div class="form-group">
                             <label class="form-label">שכר מבוקש (ברוטו חודשי)</label>
                             <div class="input-wrapper">
-                                <i data-feather="dollar-sign"></i>
+                                <span class="input-icon-text">₪</span>
                                 <input type="number" name="salary" class="form-input" placeholder="למשל: 15000" min="0">
                             </div>
                         </div>

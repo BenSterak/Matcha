@@ -59,10 +59,7 @@ if ($matchId) {
                 </p>
             </div>
 
-            <!-- Example messages (placeholder) -->
-            <div class="chat-message received">
-                שלום! ראינו שאתם מתעניינים במשרה שלנו. מתי תהיו זמינים לשיחה קצרה?
-            </div>
+            <!-- Messages will be loaded by JavaScript -->
         </div>
 
         <div class="chat-input-container">
@@ -75,27 +72,105 @@ if ($matchId) {
     </main>
 
     <script>
-        function sendMessage() {
+        const matchId = <?php echo $matchId; ?>;
+        let lastMessageId = 0;
+        let isLoading = false;
+
+        // Load existing messages on page load
+        document.addEventListener('DOMContentLoaded', loadMessages);
+
+        // Poll for new messages every 3 seconds
+        setInterval(pollNewMessages, 3000);
+
+        async function loadMessages() {
+            try {
+                const response = await fetch(`/api/messages.php?action=get&matchId=${matchId}`);
+                const data = await response.json();
+
+                if (data.success && data.messages.length > 0) {
+                    const container = document.getElementById('chatMessages');
+                    // Keep the system message
+                    const systemMsg = container.querySelector('div[style*="text-align: center"]');
+
+                    // Clear existing messages except system message
+                    container.innerHTML = '';
+                    if (systemMsg) container.appendChild(systemMsg);
+
+                    data.messages.forEach(msg => {
+                        addMessageToUI(msg.content, msg.isMine);
+                        lastMessageId = Math.max(lastMessageId, msg.id);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading messages:', error);
+            }
+        }
+
+        async function pollNewMessages() {
+            if (isLoading) return;
+
+            try {
+                const response = await fetch(`/api/messages.php?action=get&matchId=${matchId}&after=${lastMessageId}`);
+                const data = await response.json();
+
+                if (data.success && data.messages.length > 0) {
+                    data.messages.forEach(msg => {
+                        if (!msg.isMine) { // Only add messages from others
+                            addMessageToUI(msg.content, false);
+                        }
+                        lastMessageId = Math.max(lastMessageId, msg.id);
+                    });
+                }
+            } catch (error) {
+                console.error('Error polling messages:', error);
+            }
+        }
+
+        async function sendMessage() {
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
 
-            if (!message) return;
+            if (!message || isLoading) return;
 
-            // Add message to UI
-            const messagesContainer = document.getElementById('chatMessages');
+            isLoading = true;
+            input.disabled = true;
+
+            try {
+                const response = await fetch('/api/messages.php?action=send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        matchId: matchId,
+                        content: message
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    addMessageToUI(message, true);
+                    lastMessageId = Math.max(lastMessageId, data.message.id);
+                    input.value = '';
+                } else {
+                    alert(data.error || 'שגיאה בשליחת ההודעה');
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                alert('שגיאה בשליחת ההודעה');
+            }
+
+            isLoading = false;
+            input.disabled = false;
+            input.focus();
+        }
+
+        function addMessageToUI(content, isMine) {
+            const container = document.getElementById('chatMessages');
             const messageEl = document.createElement('div');
-            messageEl.className = 'chat-message sent';
-            messageEl.textContent = message;
-            messagesContainer.appendChild(messageEl);
-
-            // Clear input
-            input.value = '';
-
-            // Scroll to bottom
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-            // TODO: Send to server
-            console.log('Message sent:', message);
+            messageEl.className = 'chat-message ' + (isMine ? 'sent' : 'received');
+            messageEl.textContent = content;
+            container.appendChild(messageEl);
+            container.scrollTop = container.scrollHeight;
         }
     </script>
 

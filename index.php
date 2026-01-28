@@ -17,6 +17,16 @@ if (isset($_SESSION['user_id'])) {
     <meta name="theme-color" content="#2ECC71">
     <meta name="description" content="Matcha - מצא את העבודה הבאה שלך בהחלקה">
     <title>Matcha - מצא את העבודה הבאה שלך</title>
+
+    <!-- Google Analytics - Replace GA_MEASUREMENT_ID with your actual ID -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'GA_MEASUREMENT_ID');
+    </script>
+
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
@@ -30,7 +40,7 @@ if (isset($_SESSION['user_id'])) {
         <!-- Content -->
         <div class="welcome-content">
             <div class="welcome-logo-container">
-                <img src="assets/images/LOGO.jpeg" alt="Matcha Logo" class="welcome-logo">
+                <img src="assets/images/ICON.jpeg" alt="Matcha Logo" class="welcome-logo">
             </div>
 
             <h1 class="welcome-title">Matcha</h1>
