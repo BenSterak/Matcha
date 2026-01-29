@@ -20,17 +20,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'שם הוא שדה חובה';
     } else {
         try {
-            $stmt = $pdo->prepare("
-                UPDATE users SET
-                    name = ?,
-                    bio = ?,
-                    photo = ?,
-                    field = ?,
-                    salary = ?,
-                    workModel = ?
-                WHERE id = ?
-            ");
-            $stmt->execute([$name, $bio, $photo, $field, $salary, $workModel, $_SESSION['user_id']]);
+            // Dynamic update based on role
+            if ($user['role'] === 'employer') {
+                $companyDetails = [
+                    'company_name' => $_POST['company_name'] ?? $user['company_name'],
+                    'company_website' => $_POST['company_website'] ?? '',
+                    'company_location' => $_POST['company_location'] ?? '',
+                    'company_size' => $_POST['company_size'] ?? '',
+                    'company_cover' => $_POST['company_cover'] ?? ''
+                ];
+
+                $sql = "UPDATE users SET name=?, bio=?, photo=?, field=?, salary=?, workModel=?, 
+                        company_name=?, company_website=?, company_location=?, company_size=?, company_cover=? 
+                        WHERE id=?";
+                $params = [
+                    $name,
+                    $bio,
+                    $photo,
+                    $field,
+                    $salary,
+                    $workModel,
+                    $companyDetails['company_name'],
+                    $companyDetails['company_website'],
+                    $companyDetails['company_location'],
+                    $companyDetails['company_size'],
+                    $companyDetails['company_cover'],
+                    $_SESSION['user_id']
+                ];
+            } else {
+                $jobSeekerDetails = [
+                    'resume_file' => $_POST['resume_file'] ?? ($user['resume_file'] ?? ''),
+                    'portfolio_url' => $_POST['portfolio_url'] ?? '',
+                    'linkedin_url' => $_POST['linkedin_url'] ?? ''
+                ];
+
+                $sql = "UPDATE users SET name=?, bio=?, photo=?, field=?, salary=?, workModel=?, 
+                        resume_file=?, portfolio_url=?, linkedin_url=? 
+                        WHERE id=?";
+                $params = [
+                    $name,
+                    $bio,
+                    $photo,
+                    $field,
+                    $salary,
+                    $workModel,
+                    $jobSeekerDetails['resume_file'],
+                    $jobSeekerDetails['portfolio_url'],
+                    $jobSeekerDetails['linkedin_url'],
+                    $_SESSION['user_id']
+                ];
+            }
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
 
             $success = 'הפרופיל עודכן בהצלחה!';
             $user = getCurrentUser(); // Refresh user data
@@ -79,142 +121,343 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     <?php endif; ?>
 
-    <form method="POST">
+    <form method="POST" id="profileForm">
         <div class="profile-section">
             <h3 class="profile-section-title">
                 <i data-feather="user" style="width: 18px; height: 18px;"></i>
                 פרטים אישיים
             </h3>
 
-            <div class="form-group" style="margin-bottom: var(--spacing-md);">
-                <label class="form-label">שם מלא</label>
-                <input type="text" name="name" class="form-input" value="<?php echo htmlspecialchars($user['name']); ?>"
-                    required style="padding-right: var(--spacing-md);">
-            </div>
+            <!-- Company Details (Employer Only) -->
+            <?php if ($user['role'] === 'employer'): ?>
+                <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                    <label class="form-label">שם החברה</label>
+                    <input type="text" name="company_name" class="form-input"
+                        value="<?php echo htmlspecialchars($user['company_name'] ?? ''); ?>" required placeholder="שם העסק">
+                </div>
+
+                <div class="form-groups-row" style="display: flex; gap: var(--spacing-md);">
+                    <div class="form-group" style="flex: 1; margin-bottom: var(--spacing-md);">
+                        <label class="form-label">אתר החברה</label>
+                        <div class="input-wrapper">
+                            <i data-feather="globe"></i>
+                            <input type="url" name="company_website" class="form-input"
+                                value="<?php echo htmlspecialchars($user['company_website'] ?? ''); ?>"
+                                placeholder="https://example.com">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="flex: 1; margin-bottom: var(--spacing-md);">
+                        <label class="form-label">גודל חברה</label>
+                        <select name="company_size" class="form-input">
+                            <option value="">בחרו גודל</option>
+                            <?php
+                            $sizes = ['1-10', '11-50', '51-200', '201-500', '500+'];
+                            $currentSize = $user['company_size'] ?? '';
+                            foreach ($sizes as $s) {
+                                $sel = $currentSize === $s ? 'selected' : '';
+                                echo "<option value=\"$s\" $sel>$s עובדים</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                    <label class="form-label">מיקום המשרדים</label>
+                    <div class="input-wrapper">
+                        <i data-feather="map-pin"></i>
+                        <input type="text" name="company_location" class="form-input"
+                            value="<?php echo htmlspecialchars($user['company_location'] ?? ''); ?>"
+                            placeholder="תל אביב, הרצליה...">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">תמונת קאבר / משרד</label>
+                    <?php
+                    $cover = $user['company_cover'] ?? '';
+                    $hasCover = !empty($cover);
+                    ?>
+                    <div id="coverPreviewContainer"
+                        style="margin-bottom: var(--spacing-sm); <?php echo $hasCover ? '' : 'display:none;'; ?>">
+                        <img id="coverPreview" src="<?php echo htmlspecialchars($cover); ?>"
+                            style="width: 100%; height: 160px; object-fit: cover; border-radius: var(--radius-md);">
+                        <button type="button" onclick="removeCover()" class="btn btn-sm btn-ghost"
+                            style="color: var(--error); margin-top: 5px;">
+                            <i data-feather="trash-2" style="width: 14px;"></i> הסר תמונה
+                        </button>
+                    </div>
+
+                    <input type="hidden" name="company_cover" id="companyCoverInput"
+                        value="<?php echo htmlspecialchars($cover); ?>">
+
+                    <button type="button" class="btn btn-secondary btn-full"
+                        onclick="document.getElementById('coverFile').click()">
+                        <i data-feather="image"></i> בחרו תמונת נושא
+                    </button>
+                    <input type="file" id="coverFile" accept="image/*" style="display: none;" onchange="uploadCover(this)">
+                </div>
+
+                <!-- Hidden name field for compatibility -->
+                <input type="hidden" name="name" value="<?php echo htmlspecialchars($user['name']); ?>">
+
+            <?php else: ?>
+                <!-- Job Seeker Fields -->
+                <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                    <label class="form-label">שם מלא</label>
+                    <input type="text" name="name" class="form-input" value="<?php echo htmlspecialchars($user['name']); ?>"
+                        required style="padding-right: var(--spacing-md);">
+                </div>
+
+                <div class="form-groups-row" style="display: flex; gap: var(--spacing-md);">
+                    <div class="form-group" style="flex: 1; margin-bottom: var(--spacing-md);">
+                        <label class="form-label">לינקדאין (LinkedIn)</label>
+                        <div class="input-wrapper">
+                            <i data-feather="linkedin"></i>
+                            <input type="url" name="linkedin_url" class="form-input"
+                                value="<?php echo htmlspecialchars($user['linkedin_url'] ?? ''); ?>"
+                                placeholder="https://linkedin.com/in/...">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="flex: 1; margin-bottom: var(--spacing-md);">
+                        <label class="form-label">תיק עבודות / אתר</label>
+                        <div class="input-wrapper">
+                            <i data-feather="globe"></i>
+                            <input type="url" name="portfolio_url" class="form-input"
+                                value="<?php echo htmlspecialchars($user['portfolio_url'] ?? ''); ?>"
+                                placeholder="https://myportfolio.com">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                    <label class="form-label">קורות חיים (PDF / Word)</label>
+                    <?php
+                    $resume = $user['resume_file'] ?? '';
+                    $hasResume = !empty($resume);
+                    ?>
+                    <div id="resumePreviewContainer"
+                        style="margin-bottom: var(--spacing-sm); display: flex; align-items: center; gap: 10px; <?php echo $hasResume ? '' : 'display:none;'; ?>">
+                        <div
+                            style="background: var(--surface-hover); padding: 8px 12px; border-radius: var(--radius-md); display: flex; align-items: center; gap: 8px; flex: 1;">
+                            <i data-feather="file-text" style="color: var(--primary);"></i>
+                            <a id="resumeLink" href="<?php echo htmlspecialchars($resume); ?>" target="_blank"
+                                style="font-size: 0.875rem; color: var(--text-main); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                צפייה בקובץ הקיים
+                            </a>
+                        </div>
+                        <button type="button" onclick="removeResume()" class="btn btn-sm btn-ghost"
+                            style="color: var(--error);">
+                            <i data-feather="trash-2"></i>
+                        </button>
+                    </div>
+
+                    <input type="hidden" name="resume_file" id="resumeFileInput"
+                        value="<?php echo htmlspecialchars($resume); ?>">
+
+                    <button type="button" class="btn btn-secondary btn-full"
+                        onclick="document.getElementById('cvFile').click()">
+                        <i data-feather="upload-cloud"></i> העלאת קורות חיים
+                    </button>
+                    <input type="file" id="cvFile" accept=".pdf,.doc,.docx,application/pdf,application/msword"
+                        style="display: none;" onchange="uploadCV(this)">
+                </div>
+            <?php endif; ?>
 
             <div class="form-group" style="margin-bottom: var(--spacing-md);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm);">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm);">
                     <label class="form-label" style="margin: 0;">על עצמי</label>
                     <button type="button" id="magicBtn" class="btn btn-sm" onclick="enhanceBio()"
-                            style="background: linear-gradient(135deg, #8B5CF6, #EC4899); color: white; font-size: 0.75rem; padding: 6px 12px;">
+                        style="background: linear-gradient(135deg, #8B5CF6, #EC4899); color: white; font-size: 0.75rem; padding: 6px 12px;">
                         <i data-feather="sparkles" style="width: 14px; height: 14px;"></i>
                         שדרג עם AI
                     </button>
                 </div>
                 <textarea name="bio" id="bioField" class="form-input" rows="3" placeholder="ספרו קצת על עצמכם..."
                     style="resize: none; padding-right: var(--spacing-md);"><?php echo htmlspecialchars($user['bio'] ?? ''); ?></textarea>
-                <p id="aiStatus" style="font-size: 0.75rem; color: var(--text-light); margin-top: var(--spacing-xs); display: none;"></p>
+                <p id="aiStatus"
+                    style="font-size: 0.75rem; color: var(--text-light); margin-top: var(--spacing-xs); display: none;">
+                </p>
             </div>
 
             <div class="form-group">
                 <label class="form-label">תמונת פרופיל (אופציונלי)</label>
-                <div style="display: flex; align-items: center; gap: var(--spacing-md); margin-bottom: var(--spacing-sm);">
+                <div
+                    style="display: flex; align-items: center; gap: var(--spacing-md); margin-bottom: var(--spacing-sm);">
                     <?php
                     $defaultPhoto = 'https://ui-avatars.com/api/?name=' . urlencode($user['name']) . '&size=100&background=22C55E&color=fff&bold=true';
                     ?>
                     <img id="photoPreview" src="<?php echo htmlspecialchars($user['photo'] ?: $defaultPhoto); ?>"
-                         alt="תמונת פרופיל"
-                         style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
+                        alt="תמונת פרופיל" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
+                    <input type="hidden" name="photo" id="photoUrl"
+                        value="<?php echo htmlspecialchars($user['photo'] ?? ''); ?>">
                     <div>
-                        <p style="font-size: 0.875rem; color: var(--text-muted);">תמונה אוטומטית תיווצר מהשם אם לא תוזן</p>
+                        <p style="font-size: 0.875rem; color: var(--text-muted);">תמונה אוטומטית תיווצר מהשם אם לא תוזן
+                        </p>
                     </div>
                 </div>
 
-                <!-- Photo upload tabs -->
-                <div style="display: flex; gap: var(--spacing-sm); margin-bottom: var(--spacing-sm);">
-                    <button type="button" id="tabUpload" class="btn btn-sm btn-primary" onclick="showUploadTab()">
-                        <i data-feather="upload" style="width: 14px; height: 14px;"></i>
-                        העלאת קובץ
-                    </button>
-                    <button type="button" id="tabUrl" class="btn btn-sm btn-secondary" onclick="showUrlTab()">
-                        <i data-feather="link" style="width: 14px; height: 14px;"></i>
-                        קישור לתמונה
-                    </button>
-                </div>
+                <!-- Photo upload -->
+                <div style="margin-bottom: var(--spacing-sm);">
 
-                <!-- File upload -->
-                <div id="uploadSection">
-                    <input type="file" id="avatarFile" accept="image/jpeg,image/png,image/gif,image/webp"
-                           style="display: none;" onchange="uploadAvatar(this)">
-                    <button type="button" class="btn btn-secondary btn-full" onclick="document.getElementById('avatarFile').click()">
-                        <i data-feather="image" style="width: 18px; height: 18px;"></i>
-                        בחרו תמונה מהמכשיר
-                    </button>
-                    <p style="font-size: 0.75rem; color: var(--text-light); margin-top: var(--spacing-xs); text-align: center;">
-                        JPEG, PNG, GIF, WebP - עד 5MB
-                    </p>
-                    <div id="uploadProgress" style="display: none; margin-top: var(--spacing-sm);">
-                        <div style="background: var(--border); border-radius: var(--radius-full); height: 4px; overflow: hidden;">
-                            <div id="progressBar" style="background: var(--primary); height: 100%; width: 0%; transition: width 0.3s;"></div>
+                    <!-- File upload -->
+                    <div id="uploadSection">
+                        <input type="file" id="avatarFile" accept="image/jpeg,image/png,image/gif,image/webp"
+                            style="display: none;" onchange="uploadAvatar(this)">
+                        <button type="button" class="btn btn-secondary btn-full"
+                            onclick="document.getElementById('avatarFile').click()">
+                            <i data-feather="image" style="width: 18px; height: 18px;"></i>
+                            בחרו תמונה מהמכשיר
+                        </button>
+                        <p
+                            style="font-size: 0.75rem; color: var(--text-light); margin-top: var(--spacing-xs); text-align: center;">
+                            JPEG, PNG, GIF, WebP - עד 5MB
+                        </p>
+                        <div id="uploadProgress" style="display: none; margin-top: var(--spacing-sm);">
+                            <div
+                                style="background: var(--border); border-radius: var(--radius-full); height: 4px; overflow: hidden;">
+                                <div id="progressBar"
+                                    style="background: var(--primary); height: 100%; width: 0%; transition: width 0.3s;">
+                                </div>
+                            </div>
+                            <p id="uploadStatus"
+                                style="font-size: 0.75rem; color: var(--text-muted); margin-top: var(--spacing-xs); text-align: center;">
+                                מעלה...</p>
                         </div>
-                        <p id="uploadStatus" style="font-size: 0.75rem; color: var(--text-muted); margin-top: var(--spacing-xs); text-align: center;">מעלה...</p>
                     </div>
-                </div>
 
-                <!-- URL input (hidden by default) -->
-                <div id="urlSection" style="display: none;">
-                    <div class="input-wrapper">
-                        <i data-feather="link"></i>
-                        <input type="url" name="photo" id="photoUrl" class="form-input"
-                            value="<?php echo htmlspecialchars($user['photo'] ?? ''); ?>"
-                            placeholder="קישור לתמונה (לא חובה)"
-                            oninput="updatePhotoPreview(this.value)">
-                    </div>
+
                 </div>
             </div>
-        </div>
 
-        <?php if ($user['role'] === 'jobseeker'): ?>
-            <div class="profile-section">
-                <h3 class="profile-section-title">
-                    <i data-feather="briefcase" style="width: 18px; height: 18px;"></i>
-                    העדפות עבודה
-                </h3>
+            <?php if ($user['role'] === 'jobseeker'): ?>
+                <div class="profile-section">
+                    <h3 class="profile-section-title">
+                        <i data-feather="briefcase" style="width: 18px; height: 18px;"></i>
+                        העדפות עבודה
+                    </h3>
 
-                <div class="form-group" style="margin-bottom: var(--spacing-md);">
-                    <label class="form-label">תחום עיסוק</label>
-                    <select name="field" class="form-input" style="padding-right: var(--spacing-md);">
-                        <option value="">בחרו תחום</option>
-                        <option value="tech" <?php echo $user['field'] === 'tech' ? 'selected' : ''; ?>>הייטק / טכנולוגיה
-                        </option>
-                        <option value="marketing" <?php echo $user['field'] === 'marketing' ? 'selected' : ''; ?>>שיווק
-                            ופרסום</option>
-                        <option value="sales" <?php echo $user['field'] === 'sales' ? 'selected' : ''; ?>>מכירות</option>
-                        <option value="finance" <?php echo $user['field'] === 'finance' ? 'selected' : ''; ?>>פיננסים וכלכלה
-                        </option>
-                        <option value="design" <?php echo $user['field'] === 'design' ? 'selected' : ''; ?>>עיצוב</option>
-                        <option value="hr" <?php echo $user['field'] === 'hr' ? 'selected' : ''; ?>>משאבי אנוש</option>
-                        <option value="operations" <?php echo $user['field'] === 'operations' ? 'selected' : ''; ?>>תפעול
-                            ולוגיסטיקה</option>
-                        <option value="other" <?php echo $user['field'] === 'other' ? 'selected' : ''; ?>>אחר</option>
-                    </select>
+                    <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                        <label class="form-label">תחום עיסוק</label>
+                        <select name="field" class="form-input" style="padding-right: var(--spacing-md);">
+                            <option value="">בחרו תחום</option>
+                            <option value="tech" <?php echo $user['field'] === 'tech' ? 'selected' : ''; ?>>הייטק / טכנולוגיה
+                            </option>
+                            <option value="marketing" <?php echo $user['field'] === 'marketing' ? 'selected' : ''; ?>>שיווק
+                                ופרסום</option>
+                            <option value="sales" <?php echo $user['field'] === 'sales' ? 'selected' : ''; ?>>מכירות</option>
+                            <option value="finance" <?php echo $user['field'] === 'finance' ? 'selected' : ''; ?>>פיננסים
+                                וכלכלה
+                            </option>
+                            <option value="design" <?php echo $user['field'] === 'design' ? 'selected' : ''; ?>>עיצוב</option>
+                            <option value="hr" <?php echo $user['field'] === 'hr' ? 'selected' : ''; ?>>משאבי אנוש</option>
+                            <option value="operations" <?php echo $user['field'] === 'operations' ? 'selected' : ''; ?>>תפעול
+                                ולוגיסטיקה</option>
+                            <option value="other" <?php echo $user['field'] === 'other' ? 'selected' : ''; ?>>אחר</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                        <label class="form-label">שכר מבוקש (ברוטו חודשי)</label>
+                        <input type="number" name="salary" class="form-input" value="<?php echo intval($user['salary']); ?>"
+                            min="0" placeholder="למשל: 15000" style="padding-right: var(--spacing-md);">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">מודל עבודה מועדף</label>
+                        <select name="work_model" class="form-input" style="padding-right: var(--spacing-md);">
+                            <option value="">בחרו העדפה</option>
+                            <option value="office" <?php echo $user['workModel'] === 'office' ? 'selected' : ''; ?>>משרד
+                            </option>
+                            <option value="remote" <?php echo $user['workModel'] === 'remote' ? 'selected' : ''; ?>>עבודה
+                                מהבית
+                            </option>
+                            <option value="hybrid" <?php echo $user['workModel'] === 'hybrid' ? 'selected' : ''; ?>>היברידי
+                            </option>
+                        </select>
+                    </div>
                 </div>
+            <?php endif; ?>
 
-                <div class="form-group" style="margin-bottom: var(--spacing-md);">
-                    <label class="form-label">שכר מבוקש (ברוטו חודשי)</label>
-                    <input type="number" name="salary" class="form-input" value="<?php echo intval($user['salary']); ?>"
-                        min="0" placeholder="למשל: 15000" style="padding-right: var(--spacing-md);">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">מודל עבודה מועדף</label>
-                    <select name="work_model" class="form-input" style="padding-right: var(--spacing-md);">
-                        <option value="">בחרו העדפה</option>
-                        <option value="office" <?php echo $user['workModel'] === 'office' ? 'selected' : ''; ?>>משרד</option>
-                        <option value="remote" <?php echo $user['workModel'] === 'remote' ? 'selected' : ''; ?>>עבודה מהבית
-                        </option>
-                        <option value="hybrid" <?php echo $user['workModel'] === 'hybrid' ? 'selected' : ''; ?>>היברידי
-                        </option>
-                    </select>
-                </div>
-            </div>
-        <?php endif; ?>
-
-        <button type="submit" class="btn btn-primary btn-full">
-            <i data-feather="save" style="width: 18px; height: 18px;"></i>
-            שמור שינויים
-        </button>
+            <button type="button" class="btn btn-primary btn-full" onclick="submitProfileForm(this)">
+                <i data-feather="save" style="width: 18px; height: 18px;"></i>
+                שמור שינויים
+            </button>
     </form>
+
+    <script>
+        function submitProfileForm(btn) {
+            // Basic validation
+            const nameInput = document.querySelector('input[name="name"]');
+            const name = nameInput ? nameInput.value.trim() : '';
+
+            if (!name) {
+                alert('שם מלא הוא שדה חובה');
+                return;
+            }
+
+            // Visual feedback
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-dots">שומר...</span>';
+
+            // Force submit
+            document.getElementById('profileForm').submit();
+        }
+        function removeResume() {
+            document.getElementById('resumeFileInput').value = '';
+            document.getElementById('resumePreviewContainer').style.display = 'none';
+        }
+
+        async function uploadCV(input) {
+            if (!input.files || !input.files[0]) return;
+
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append('cv', file);
+
+            // Simple feedback
+            const btn = input.previousElementSibling;
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-dots">מעלה...</span>';
+
+            try {
+                const response = await fetch('/api/upload.php?action=cv', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const responseText = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (e) {
+                    console.error('Server response:', responseText);
+                    throw new Error('תגובת שרת לא תקינה');
+                }
+
+                if (data.success) {
+                    document.getElementById('resumeFileInput').value = data.url;
+                    document.getElementById('resumeLink').href = data.url;
+                    document.getElementById('resumePreviewContainer').style.display = 'flex';
+                    alert('קורות החיים הועלו בהצלחה! אל תשכחו לשמור.');
+                } else {
+                    alert(data.error || 'שגיאה בהעלאת קובץ');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('שגיאה בהעלאה. נסו שוב.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                input.value = '';
+            }
+        }
+    </script>
 
     <div style="margin-top: var(--spacing-xxl); text-align: center;">
         <a href="logout.php" class="btn btn-ghost" style="color: var(--error);">
@@ -231,25 +474,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const preview = document.getElementById('photoPreview');
         if (url && url.trim()) {
             preview.src = url;
-            preview.onerror = function() { this.src = defaultPhoto; };
+            preview.onerror = function () { this.src = defaultPhoto; };
         } else {
             preview.src = defaultPhoto;
         }
     }
 
-    function showUploadTab() {
-        document.getElementById('uploadSection').style.display = 'block';
-        document.getElementById('urlSection').style.display = 'none';
-        document.getElementById('tabUpload').className = 'btn btn-sm btn-primary';
-        document.getElementById('tabUrl').className = 'btn btn-sm btn-secondary';
-    }
 
-    function showUrlTab() {
-        document.getElementById('uploadSection').style.display = 'none';
-        document.getElementById('urlSection').style.display = 'block';
-        document.getElementById('tabUpload').className = 'btn btn-sm btn-secondary';
-        document.getElementById('tabUrl').className = 'btn btn-sm btn-primary';
-    }
 
     async function uploadAvatar(input) {
         if (!input.files || !input.files[0]) return;
@@ -266,6 +497,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         progressBar.style.width = '0%';
         uploadStatus.textContent = 'מעלה...';
         uploadStatus.style.color = 'var(--text-muted)';
+        progressBar.style.background = 'var(--primary)';
 
         try {
             // Simulate progress
@@ -285,7 +517,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             clearInterval(progressInterval);
             progressBar.style.width = '100%';
 
-            const data = await response.json();
+            const responseText = await response.text();
+            let data;
+            try {
+                data = JSON.parse(responseText);
+            } catch (e) {
+                console.error('Server response:', responseText);
+                throw new Error('תגובת שרת לא תקינה');
+            }
 
             if (data.success) {
                 uploadStatus.textContent = 'התמונה הועלתה בהצלחה!';
@@ -302,12 +541,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 progressBar.style.background = 'var(--error)';
             }
         } catch (error) {
-            uploadStatus.textContent = 'שגיאה בהעלאה. נסו שוב.';
+            console.error('Upload error:', error);
+            uploadStatus.textContent = error.message || 'שגיאה בהעלאה. נסו שוב.';
             uploadStatus.style.color = 'var(--error)';
             progressBar.style.background = 'var(--error)';
         }
 
         input.value = '';
+    }
+
+    async function uploadCover(input) {
+        if (!input.files || !input.files[0]) return;
+
+        const file = input.files[0];
+        const formData = new FormData();
+        formData.append('cover', file);
+
+        // Simple feedback for cover upload
+        const btn = input.previousElementSibling; // The button that triggered this
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-dots">מעלה...</span>';
+
+        try {
+            const response = await fetch('/api/upload.php?action=cover', {
+                method: 'POST',
+                body: formData
+            });
+
+            const responseText = await response.text();
+            let data;
+            try {
+                data = JSON.parse(responseText);
+            } catch (e) {
+                console.error('Server response:', responseText);
+                throw new Error('תגובת שרת לא תקינה');
+            }
+
+            if (data.success) {
+                document.getElementById('companyCoverInput').value = data.url;
+                document.getElementById('coverPreview').src = data.url;
+                document.getElementById('coverPreviewContainer').style.display = 'block';
+            } else {
+                alert(data.error || 'שגיאה בהעלאת תמונת נושא');
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            alert('שגיאה בהעלאה. נסו שוב.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            input.value = '';
+        }
+    }
+
+    function removeCover() {
+        document.getElementById('companyCoverInput').value = '';
+        document.getElementById('coverPreview').src = '';
+        document.getElementById('coverPreviewContainer').style.display = 'none';
     }
 
     async function enhanceBio() {

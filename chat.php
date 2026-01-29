@@ -10,14 +10,38 @@ $job = null;
 if ($matchId) {
     // Get match details
     try {
-        $stmt = $pdo->prepare("
-            SELECT m.*, j.title as jobTitle, j.company, j.image as jobImage
-            FROM matches m
-            JOIN jobs j ON m.jobId = j.id
-            WHERE m.id = ? AND m.userId = ? AND m.status = 'matched'
-        ");
-        $stmt->execute([$matchId, $_SESSION['user_id']]);
+        // First check user role
+        $stmt = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+        $userRole = $stmt->fetchColumn();
+
+        if ($userRole === 'employer') {
+            // Employer View: Show Candidate Info
+            $stmt = $pdo->prepare("
+                SELECT m.*, u.name as title, '' as company, 'candidate' as type, u.photo as jobImage
+                FROM matches m
+                JOIN users u ON m.userId = u.id
+                JOIN jobs j ON m.jobId = j.id
+                WHERE m.id = ? AND j.business_id = ? AND m.status = 'matched'
+            ");
+            $stmt->execute([$matchId, $_SESSION['user_id']]);
+        } else {
+            // Job Seeker View: Show Job Info
+            $stmt = $pdo->prepare("
+                SELECT m.*, j.title as jobTitle, j.company, j.image as jobImage
+                FROM matches m
+                JOIN jobs j ON m.jobId = j.id
+                WHERE m.id = ? AND m.userId = ? AND m.status = 'matched'
+            ");
+            $stmt->execute([$matchId, $_SESSION['user_id']]);
+        }
+
         $match = $stmt->fetch();
+
+        // Normalize title for view
+        if ($match && !isset($match['jobTitle'])) {
+            $match['jobTitle'] = $match['title'];
+        }
     } catch (PDOException $e) {
         $match = null;
     }
@@ -46,7 +70,7 @@ if ($matchId) {
         <div style="width: 44px;"></div>
     </header>
 
-    <main style="flex: 1; display: flex; flex-direction: column; height: calc(100vh - 60px);">
+    <main style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
         <div class="chat-messages" id="chatMessages">
             <!-- System message -->
             <div style="text-align: center; padding: var(--spacing-xl); color: var(--text-light);">

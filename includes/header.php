@@ -48,8 +48,8 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#2ECC71">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#10B981">
     <meta name="description" content="Matcha - מצא את העבודה הבאה שלך בהחלקה">
 
     <title>

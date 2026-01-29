@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'ברוכים הבאים';
+$pageTitle = 'Matcha - השמת עובדים חכמה';
 session_start();
 
 // If user is already logged in, redirect to feed
@@ -13,75 +13,154 @@ if (isset($_SESSION['user_id'])) {
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#2ECC71">
-    <meta name="description" content="Matcha - מצא את העבודה הבאה שלך בהחלקה">
-    <title>Matcha - מצא את העבודה הבאה שלך</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#10B981">
+    <meta name="description" content="Matcha - פלטפורמת הגיוס החדשה שמחברת בין מעסיקים למועמדים באמצעות AI">
+    <title>Matcha - מהפכת הגיוס כבר כאן</title>
 
-    <!-- Google Analytics - Replace GA_MEASUREMENT_ID with your actual ID -->
+    <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
+        function gtag() { dataLayer.push(arguments); }
         gtag('js', new Date());
         gtag('config', 'GA_MEASUREMENT_ID');
     </script>
 
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/landing.css?v=<?php echo time(); ?>">
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
 
-<body>
-    <div class="app-container welcome-page">
-        <!-- Background Decorations -->
-        <div class="welcome-decor welcome-decor-1"></div>
-        <div class="welcome-decor welcome-decor-2"></div>
+<body class="landing-page">
 
-        <!-- Content -->
-        <div class="welcome-content">
-            <div class="welcome-logo-container">
-                <img src="assets/images/ICON.jpeg" alt="Matcha Logo" class="welcome-logo">
+    <!-- Navbar -->
+    <nav class="landing-nav">
+        <div class="nav-brand">
+            <img src="assets/images/ICON.jpeg" alt="Logo">
+            <span>Matcha</span>
+        </div>
+        <div>
+            <a href="login.php" class="btn btn-secondary btn-sm">כניסה</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="landing-hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <div class="hero-badge">
+                    ✨ הגיוס של המחר
+                </div>
+                <h1 class="hero-title">למצוא עבודה ב-Swipe אחד.</h1>
+                <p class="hero-subtitle">
+                    המערכת החכמה שמחברת בין כישרונות למעסיקים. בלי קורות חיים מסורבלים, בלי המתנה. פשוט התאמה מושלמת.
+                </p>
+
+                <div class="hero-actions">
+                    <a href="register.php" class="btn btn-primary btn-lg">
+                        <i data-feather="user-plus"></i>
+                        יצירת חשבון בחינם
+                    </a>
+                    <a href="#features" class="btn btn-secondary btn-lg btn-landing-outline">
+                        <i data-feather="info"></i>
+                        איך זה עובד?
+                    </a>
+                </div>
+
+                <div class="hero-social-proof">
+                    <div class="avatar-group">
+                        <img src="https://ui-avatars.com/api/?name=Or&background=random">
+                        <img src="https://ui-avatars.com/api/?name=Gal&background=random">
+                        <img src="https://ui-avatars.com/api/?name=Dan&background=random">
+                    </div>
+                    <span>הצטרפו ל-1,000+ מועמדים</span>
+                </div>
             </div>
 
-            <h1 class="welcome-title">Matcha</h1>
-            <p class="welcome-tagline">המשחק החדש של עולם הגיוס - מצאו את ההתאמה המושלמת</p>
-
-            <div class="welcome-features">
-                <div class="welcome-feature">
-                    <div class="welcome-feature-icon">
-                        <i data-feather="zap"></i>
+            <!-- Phone Mockup -->
+            <div class="hero-mockup">
+                <div class="mockup-frame">
+                    <div class="mockup-screen"
+                        style="background-image: url('https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=600&q=80');">
+                        <!-- Overlay UI Simulation -->
+                        <div class="mockup-overlay">
+                            <div class="mockup-card">
+                                <h4>מפתח/ת Full Stack</h4>
+                                <p>תל אביב • 30k-40k</p>
+                            </div>
+                            <div class="mockup-actions">
+                                <div class="mockup-btn">
+                                    <i data-feather="x" width="30" height="30"></i>
+                                </div>
+                                <div class="mockup-btn like">
+                                    <i data-feather="heart" width="30" height="30"></i>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <span class="welcome-feature-text">התאמה חכמה</span>
                 </div>
-                <div class="welcome-feature">
-                    <div class="welcome-feature-icon">
-                        <i data-feather="users"></i>
-                    </div>
-                    <span class="welcome-feature-text">קשר ישיר</span>
-                </div>
-                <div class="welcome-feature">
-                    <div class="welcome-feature-icon">
-                        <i data-feather="briefcase"></i>
-                    </div>
-                    <span class="welcome-feature-text">משרות איכותיות</span>
-                </div>
-            </div>
-
-            <div class="welcome-actions">
-                <a href="register.php" class="btn btn-primary btn-lg btn-full">
-                    בואו נתחיל
-                    <i data-feather="arrow-left"></i>
-                </a>
-                <a href="login.php" class="welcome-login-link">יש לי כבר חשבון</a>
             </div>
         </div>
+    </header>
 
-        <footer class="welcome-footer">
-            <p>Matcha
-                <?php echo date('Y'); ?> - כל הזכויות שמורות
-            </p>
-        </footer>
-    </div>
+    <!-- Features Section -->
+    <section id="features" class="landing-features">
+        <div class="section-header">
+            <h2>למה לבחור ב-Matcha?</h2>
+            <p>הפלטפורמה שלנו משנה את חוקי המשחק באמצעות טכנולוגיה מתקדמת וחווית משתמש
+                ממכרת.</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i data-feather="cpu"></i>
+                </div>
+                <h3>התאמה מבוססת AI</h3>
+                <p>האלגוריתם שלנו לומד את ההעדפות שלכם ומציג לכם רק משרות או מועמדים שבאמת רלוונטיים.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i data-feather="zap"></i>
+                </div>
+                <h3>מהירות שיא</h3>
+                <p>שכחו מתהליכים ארוכים ומייגעים. אצלנו הכל קורה ברגע - Swipe אחד ואתם בדרך לראיון.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i data-feather="message-circle"></i>
+                </div>
+                <h3>תקשורת ישירה</h3>
+                <p>נוצר חיבור (Match)? נפתח צ'אט מיידי בין המעסיק למועמד. בלי מתווכים ובלי עיכובים.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="landing-cta">
+        <div class="cta-content">
+            <h2>מוכנים למצוא את ההתאמה המושלמת?</h2>
+            <p>אלפי מועמדים ומעסיקים
+                כבר כאן. ההצטרפות חינם ולוקחת פחות דקה.</p>
+            <a href="register.php" class="btn btn-primary btn-lg btn-cta-light">
+                התחילו עכשיו
+                <i data-feather="arrow-left"></i>
+            </a>
+        </div>
+    </section>
+
+    <footer class="landing-footer">
+        <div class="footer-links">
+            <a href="#">אודות</a>
+            <a href="#">תנאי שימוש</a>
+            <a href="#">פרטיות</a>
+            <a href="#">צור קשר</a>
+        </div>
+        <p>&copy; <?php echo date('Y'); ?> Matcha. כל הזכויות שמורות.</p>
+    </footer>
 
     <script>
         feather.replace();

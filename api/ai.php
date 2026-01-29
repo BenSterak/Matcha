@@ -10,7 +10,7 @@ require_once '../config/db.php';
 
 // IMPORTANT: Replace with your actual Gemini API key
 // Get your API key from: https://makersuite.google.com/app/apikey
-define('GEMINI_API_KEY', 'YOUR_GEMINI_API_KEY_HERE');
+define('GEMINI_API_KEY', 'AIzaSyBPstyEzy4qYTctl-td_MqDcmdAKvBGS-o');
 define('GEMINI_API_URL', 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent');
 
 // Check authentication
@@ -24,7 +24,8 @@ $userId = $_SESSION['user_id'];
 $action = $_GET['action'] ?? '';
 
 // Helper function to call Gemini API
-function callGemini($prompt) {
+function callGemini($prompt)
+{
     if (GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
         return ['error' => 'API key not configured. Please set your Gemini API key in api/ai.php'];
     }

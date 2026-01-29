@@ -22,6 +22,9 @@ if (isset($_GET['id'])) {
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Debug logging
+    file_put_contents('debug_post.log', date('Y-m-d H:i:s') . " - POST received: " . print_r($_POST, true) . "\n", FILE_APPEND);
+
     $title = trim($_POST['title'] ?? '');
     $description = trim($_POST['description'] ?? '');
     $location = trim($_POST['location'] ?? '');
@@ -102,19 +105,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <main class="profile-page">
     <?php if ($success): ?>
-        <div
-            style="background: var(--success-light); color: var(--success); padding: var(--spacing-md); border-radius: var(--radius-md); margin-bottom: var(--spacing-md); text-align: center;">
-            <?php echo htmlspecialchars($success); ?>
-        </div>
+                    <div
+                        style="background: var(--success-light); color: var(--success); padding: var(--spacing-md); border-radius: var(--radius-md); margin-bottom: var(--spacing-md); text-align: center;">
+                        <?php echo htmlspecialchars($success); ?>
+                    </div>
     <?php endif; ?>
 
     <?php if ($error): ?>
-        <div class="auth-error" style="margin-bottom: var(--spacing-md);">
-            <?php echo htmlspecialchars($error); ?>
-        </div>
+                    <div class="auth-error" style="margin-bottom: var(--spacing-md);">
+                        <?php echo htmlspecialchars($error); ?>
+                    </div>
     <?php endif; ?>
 
-    <form method="POST">
+    <form method="POST" id="jobForm">
         <div class="profile-section">
             <h3 class="profile-section-title">
                 <i data-feather="briefcase" style="width: 18px; height: 18px;"></i>
@@ -123,16 +126,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-group" style="margin-bottom: var(--spacing-md);">
                 <label class="form-label">כותרת המשרה *</label>
-                <input type="text" name="title" class="form-input"
-                    value="<?php echo htmlspecialchars($job['title'] ?? ''); ?>" placeholder="למשל: מפתח/ת Full Stack"
-                    required style="padding-right: var(--spacing-md);">
+                <input type="text" name="title" class="form-input" id="inputTitle"
+                    value="<?php echo htmlspecialchars($_POST['title'] ?? $job['title'] ?? ''); ?>"
+                    placeholder="למשל: מפתח/ת Full Stack" required style="padding-right: var(--spacing-md);">
             </div>
 
             <div class="form-group" style="margin-bottom: var(--spacing-md);">
                 <label class="form-label">תיאור התפקיד *</label>
-                <textarea name="description" class="form-input" rows="5"
+                <textarea name="description" class="form-input" id="inputDescription" rows="5"
                     placeholder="תארו את התפקיד, הדרישות והיתרונות..." required
-                    style="resize: none; padding-right: var(--spacing-md);"><?php echo htmlspecialchars($job['description'] ?? ''); ?></textarea>
+                    style="resize: none; padding-right: var(--spacing-md);"><?php echo htmlspecialchars($_POST['description'] ?? $job['description'] ?? ''); ?></textarea>
             </div>
 
             <div class="form-group" style="margin-bottom: var(--spacing-md);">
@@ -140,7 +143,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="input-wrapper">
                     <i data-feather="map-pin"></i>
                     <input type="text" name="location" class="form-input"
-                        value="<?php echo htmlspecialchars($job['location'] ?? ''); ?>" placeholder="למשל: תל אביב">
+                        value="<?php echo htmlspecialchars($_POST['location'] ?? $job['location'] ?? ''); ?>"
+                        placeholder="למשל: תל אביב">
                 </div>
             </div>
 
@@ -149,7 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="input-wrapper">
                     <i data-feather="dollar-sign"></i>
                     <input type="text" name="salary_range" class="form-input"
-                        value="<?php echo htmlspecialchars($job['salaryRange'] ?? ''); ?>"
+                        value="<?php echo htmlspecialchars($_POST['salary_range'] ?? $job['salaryRange'] ?? ''); ?>"
                         placeholder="למשל: 15,000-20,000 ₪">
                 </div>
             </div>
@@ -158,114 +162,125 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label class="form-label">סוג משרה</label>
                 <select name="type" class="form-input" style="padding-right: var(--spacing-md);">
                     <option value="">בחרו סוג</option>
-                    <option value="משרה מלאה" <?php echo ($job['type'] ?? '') === 'משרה מלאה' ? 'selected' : ''; ?>>משרה
-                        מלאה</option>
-                    <option value="משרה חלקית" <?php echo ($job['type'] ?? '') === 'משרה חלקית' ? 'selected' : ''; ?>>משרה
-                        חלקית</option>
-                    <option value="פרילנס" <?php echo ($job['type'] ?? '') === 'פרילנס' ? 'selected' : ''; ?>>פרילנס
-                    </option>
-                    <option value="היברידי" <?php echo ($job['type'] ?? '') === 'היברידי' ? 'selected' : ''; ?>>היברידי
-                    </option>
-                    <option value="עבודה מהבית" <?php echo ($job['type'] ?? '') === 'עבודה מהבית' ? 'selected' : ''; ?>>
-                        עבודה מהבית</option>
+                    <?php
+                    $currentType = $_POST['type'] ?? $job['type'] ?? '';
+                    $types = ['משרה מלאה', 'משרה חלקית', 'פרילנס', 'היברידי', 'עבודה מהבית'];
+                    foreach ($types as $t) {
+                        $selected = $currentType === $t ? 'selected' : '';
+                        echo "<option value=\"$t\" $selected>$t</option>";
+                    }
+                    ?>
                 </select>
             </div>
 
             <div class="form-group">
                 <label class="form-label">תמונה (אופציונלי)</label>
-                <div style="display: flex; align-items: center; gap: var(--spacing-md); margin-bottom: var(--spacing-sm);">
+                <div
+                    style="display: flex; align-items: center; gap: var(--spacing-md); margin-bottom: var(--spacing-sm);">
                     <?php
-                    $previewImage = $job['image'] ?? '';
+                    $previewImage = $_POST['image'] ?? $job['image'] ?? '';
                     $defaultImage = 'https://ui-avatars.com/api/?name=' . urlencode($user['company_name'] ?? $user['name']) . '&size=100&background=22C55E&color=fff&bold=true';
                     ?>
                     <img id="imagePreview" src="<?php echo htmlspecialchars($previewImage ?: $defaultImage); ?>"
                         alt="תצוגה מקדימה"
                         style="width: 60px; height: 60px; border-radius: var(--radius-md); object-fit: cover;">
-                    <p style="font-size: 0.875rem; color: var(--text-muted);">תמונה אוטומטית תיווצר אם לא תועלה תמונה</p>
+                    <p style="font-size: 0.875rem; color: var(--text-muted);">תמונה אוטומטית תיווצר אם לא תועלה תמונה
+                    </p>
                 </div>
 
-                <!-- Image upload tabs -->
-                <div style="display: flex; gap: var(--spacing-sm); margin-bottom: var(--spacing-sm);">
-                    <button type="button" id="tabUpload" class="btn btn-sm btn-primary" onclick="showUploadTab()">
-                        <i data-feather="upload" style="width: 14px; height: 14px;"></i>
-                        העלאת קובץ
-                    </button>
-                    <button type="button" id="tabUrl" class="btn btn-sm btn-secondary" onclick="showUrlTab()">
-                        <i data-feather="link" style="width: 14px; height: 14px;"></i>
-                        קישור לתמונה
-                    </button>
-                </div>
+                <!-- File upload -->
+                <div style="margin-bottom: var(--spacing-sm);">
 
                 <!-- File upload -->
                 <div id="uploadSection">
                     <input type="file" id="jobImageFile" accept="image/jpeg,image/png,image/gif,image/webp"
-                           style="display: none;" onchange="uploadJobImage(this)">
-                    <button type="button" class="btn btn-secondary btn-full" onclick="document.getElementById('jobImageFile').click()">
+                        style="display: none;" onchange="uploadJobImage(this)">
+                    <button type="button" class="btn btn-secondary btn-full"
+                        onclick="document.getElementById('jobImageFile').click()">
                         <i data-feather="image" style="width: 18px; height: 18px;"></i>
                         בחרו תמונה מהמכשיר
                     </button>
-                    <p style="font-size: 0.75rem; color: var(--text-light); margin-top: var(--spacing-xs); text-align: center;">
+                    <p
+                        style="font-size: 0.75rem; color: var(--text-light); margin-top: var(--spacing-xs); text-align: center;">
                         JPEG, PNG, GIF, WebP - עד 5MB
                     </p>
                     <div id="uploadProgress" style="display: none; margin-top: var(--spacing-sm);">
-                        <div style="background: var(--border); border-radius: var(--radius-full); height: 4px; overflow: hidden;">
-                            <div id="progressBar" style="background: var(--primary); height: 100%; width: 0%; transition: width 0.3s;"></div>
+                        <div
+                            style="background: var(--border); border-radius: var(--radius-full); height: 4px; overflow: hidden;">
+                            <div id="progressBar"
+                                style="background: var(--primary); height: 100%; width: 0%; transition: width 0.3s;">
+                            </div>
                         </div>
-                        <p id="uploadStatus" style="font-size: 0.75rem; color: var(--text-muted); margin-top: var(--spacing-xs); text-align: center;">מעלה...</p>
+                        <p id="uploadStatus"
+                            style="font-size: 0.75rem; color: var(--text-muted); margin-top: var(--spacing-xs); text-align: center;">
+                            מעלה...</p>
                     </div>
                 </div>
 
-                <!-- URL input (hidden by default) -->
-                <div id="urlSection" style="display: none;">
-                    <div class="input-wrapper">
-                        <i data-feather="link"></i>
-                        <input type="url" id="imageUrl" class="form-input"
-                            value="<?php echo htmlspecialchars($job['image'] ?? ''); ?>"
-                            placeholder="קישור לתמונה (לא חובה)" oninput="updateImagePreview(this.value)">
-                    </div>
-                </div>
+
 
                 <!-- Hidden input for form submission -->
-                <input type="hidden" name="image" id="imageHidden" value="<?php echo htmlspecialchars($job['image'] ?? ''); ?>">
+                <input type="hidden" name="image" id="imageHidden"
+                    value="<?php echo htmlspecialchars($previewImage); ?>">
             </div>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-full">
+        <button type="button" class="btn btn-primary btn-full" onclick="submitJobForm(this)">
             <i data-feather="<?php echo $job ? 'save' : 'plus'; ?>" style="width: 18px; height: 18px;"></i>
             <?php echo $job ? 'שמור שינויים' : 'פרסום משרה'; ?>
         </button>
 
         <?php if ($job): ?>
-            <button type="button" class="btn btn-ghost btn-full" style="color: var(--error); margin-top: var(--spacing-md);"
-                onclick="deleteJob()">
-                <i data-feather="trash-2" style="width: 18px; height: 18px;"></i>
-                מחיקת משרה
-            </button>
+                        <button type="button" class="btn btn-ghost btn-full" style="color: var(--error); margin-top: var(--spacing-md);"
+                            onclick="deleteJob()">
+                            <i data-feather="trash-2" style="width: 18px; height: 18px;"></i>
+                            מחיקת משרה
+                        </button>
         <?php endif; ?>
     </form>
 </main>
 
 <?php if ($job): ?>
-    <script>
-        function deleteJob() {
-            if (confirm('האם אתם בטוחים שברצונכם למחוק את המשרה? פעולה זו לא ניתנת לביטול.')) {
-                fetch('/api/jobs.php?action=delete&id=<?php echo $job['id']; ?>', {
-                    method: 'DELETE'
-                })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            window.location.href = '/business/jobs.php';
-                        } else {
-                            alert('אירעה שגיאה במחיקת המשרה');
+                <script>
+                    function deleteJob() {
+                        if (confirm('האם אתם בטוחים שברצונכם למחוק את המשרה? פעולה זו לא ניתנת לביטול.')) {
+                            fetch('/api/jobs.php?action=delete&id=<?php echo $job['id']; ?>', {
+                                method: 'DELETE'
+                            })
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        window.location.href = '/business/jobs.php';
+                                    } else {
+                                        alert('אירעה שגיאה במחיקת המשרה');
+                                    }
+                                });
                         }
-                    });
-            }
-        }
-    </script>
+                    }
+                </script>
 <?php endif; ?>
 
 <script>
+    function submitJobForm(btn) {
+        // Basic validation
+        const title = document.getElementById('inputTitle').value.trim();
+        const description = document.getElementById('inputDescription').value.trim();
+
+        if (!title || !description) {
+            alert('אנא מלאו את שדות החובה (כותרת ותיאור)');
+            return;
+        }
+
+        // Visual feedback
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-dots">שומר...</span>';
+        
+        // Force submit
+        document.getElementById('jobForm').submit();
+    }
+
+
     const defaultImage = '<?php echo $defaultImage; ?>';
 
     function updateImagePreview(url) {
@@ -280,19 +295,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         document.getElementById('imageHidden').value = url;
     }
 
-    function showUploadTab() {
-        document.getElementById('uploadSection').style.display = 'block';
-        document.getElementById('urlSection').style.display = 'none';
-        document.getElementById('tabUpload').className = 'btn btn-sm btn-primary';
-        document.getElementById('tabUrl').className = 'btn btn-sm btn-secondary';
-    }
 
-    function showUrlTab() {
-        document.getElementById('uploadSection').style.display = 'none';
-        document.getElementById('urlSection').style.display = 'block';
-        document.getElementById('tabUpload').className = 'btn btn-sm btn-secondary';
-        document.getElementById('tabUrl').className = 'btn btn-sm btn-primary';
-    }
 
     async function uploadJobImage(input) {
         if (!input.files || !input.files[0]) return;

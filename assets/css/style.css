@@ -271,14 +271,39 @@ video {
     body {
         display: flex;
         justify-content: center;
-        align-items: flex-start;
-        padding: var(--spacing-lg) 0;
+        align-items: center;
+        padding: var(--spacing-md);
+        min-height: 100vh;
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        /* Premium Background Pattern */
+        background-image:
+            radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
+            radial-gradient(at 100% 100%, rgba(15, 23, 42, 0.05) 0px, transparent 50%);
     }
 
     .app-container {
-        min-height: calc(100vh - 3rem);
+        height: 850px;
+        max-height: 90vh;
         border-radius: var(--radius-xl);
         overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    .bottom-nav {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        max-width: 100%;
+        transform: none;
+        border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    }
+
+    .main-content,
+    .profile-page,
+    .matches-list,
+    .chat-messages {
+        overflow-y: auto;
     }
 }
 
@@ -336,6 +361,9 @@ video {
     border: 2px solid var(--surface);
 }
 
+/* ===========================================
+   Bottom Navigation
+=========================================== */
 /* ===========================================
    Bottom Navigation
 =========================================== */
@@ -869,8 +897,7 @@ video {
     flex: 1;
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 60px);
-    height: calc(100dvh - 60px);
+    height: 100%;
     padding-bottom: 70px;
     overflow: hidden;
 }
@@ -1967,4 +1994,245 @@ video {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
+}
+
+/* ===========================================
+   CRITICAL FIXES FOR NEW LAYOUT STRUCTURE
+   (Appended to preserve original mobile styles)
+   =========================================== */
+
+/* Utilities Needed for PHP Changes */
+.d-none {
+    display: none !important;
+}
+
+.d-flex {
+    display: flex !important;
+}
+
+.w-full {
+    width: 100% !important;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.mb-md {
+    margin-bottom: 1rem;
+}
+
+.mb-lg {
+    margin-bottom: 1.5rem;
+}
+
+.mb-xl {
+    margin-bottom: 2rem;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+/* Desktop Sidebar - Hidden on Mobile */
+.desktop-sidebar {
+    display: none;
+}
+
+/* Dashboard Grid - Default Mobile (1 col) */
+.grid-dashboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+/* Card Style for Dashboard */
+.card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    padding: 1.5rem;
+    border: 1px solid #e2e8f0;
+}
+
+/* Auth Pages Mobile Base */
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.auth-content {
+    width: 100%;
+    padding: 1.5rem;
+}
+
+.welcome-decor {
+    display: block;
+}
+
+/* Keep blobs on mobile */
+
+/* ===========================================
+   DESKTOP ENHANCEMENTS (>1024px)
+   =========================================== */
+@media (min-width: 1024px) {
+    .d-lg-flex {
+        display: flex !important;
+    }
+
+    .d-lg-none {
+        display: none !important;
+    }
+
+    /* Layout Change */
+    .app-container {
+        flex-direction: row;
+        max-width: 1400px;
+        margin: 0 auto;
+        min-height: 100vh;
+        overflow: hidden;
+        /* containment */
+    }
+
+    .main-content {
+        flex: 1;
+        padding: 3rem;
+        max-width: none;
+        overflow-y: auto;
+        height: 100vh;
+    }
+
+    /* Sidebar Visible */
+    .desktop-sidebar {
+        display: flex;
+        width: 280px;
+        background: #fff;
+        border-right: 1px solid #e2e8f0;
+        height: 100vh;
+        position: sticky;
+        top: 0;
+        flex-direction: column;
+        padding: 2rem;
+        z-index: 100;
+        order: -1;
+        /* RTL support */
+    }
+
+    /* Hide Bottom Nav */
+    .bottom-nav {
+        display: none !important;
+    }
+
+    /* Hide Mobile Header */
+    .header {
+        display: none !important;
+    }
+
+    /* Split Screen Auth */
+    .auth-page,
+    .welcome-page {
+        flex-direction: row;
+        align-items: stretch;
+        background: #fff;
+    }
+
+    .welcome-decor {
+        display: none;
+    }
+
+    .auth-page::before,
+    .welcome-page::before {
+        content: '';
+        flex: 1;
+        background: url('../images/login-hero.jpg'), linear-gradient(135deg, #10B981, #059669);
+        background-size: cover;
+        background-position: center;
+        display: block;
+        order: -1;
+    }
+
+    .auth-content,
+    .welcome-content {
+        flex: 0 0 550px;
+        max-width: 550px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 4rem;
+    }
+
+    /* Dashboard Grid Desktop */
+    .grid-dashboard {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+    }
+
+    /* Feed & Matches Desktop */
+    .feed-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    .feed-content {
+        margin-top: -60px;
+        /* offset header */
+    }
+
+    .swipe-deck-wrapper {
+        height: 600px;
+    }
+
+    /* Matches Page */
+    .matches-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .match-card {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 0;
+    }
+
+    .match-image {
+        width: 100%;
+        height: 180px;
+        border-radius: 0;
+    }
+
+    .match-info {
+        padding: 1rem;
+        width: 100%;
+    }
+
+    .match-status {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+    }
+
+    /* Profile Desktop */
+    .profile-page {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 3rem;
+        align-items: start;
+    }
+
+    .profile-header {
+        position: sticky;
+        top: 2rem;
+    }
 }

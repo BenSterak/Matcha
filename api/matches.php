@@ -73,14 +73,32 @@ switch ($action) {
         $userId = requireAuth();
         $status = $_GET['status'] ?? null;
 
+        // Check user role
+        $stmt = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+        $userRole = $stmt->fetchColumn();
+
         try {
-            $sql = "
-                SELECT m.*, j.title, j.company, j.location, j.image, j.salaryRange
-                FROM matches m
-                JOIN jobs j ON m.jobId = j.id
-                WHERE m.userId = ?
-            ";
-            $params = [$userId];
+            if ($userRole === 'employer') {
+                // Employer: Get matched CANDIDATES
+                $sql = "
+                    SELECT m.*, u.name as title, '' as company, 'candidate' as type, u.photo as image
+                    FROM matches m
+                    JOIN users u ON m.userId = u.id
+                    JOIN jobs j ON m.jobId = j.id
+                    WHERE j.business_id = ?
+                ";
+                $params = [$userId];
+            } else {
+                // Job Seeker: Get matched JOBS
+                $sql = "
+                    SELECT m.*, j.title, j.company, j.location, j.image, j.salaryRange
+                    FROM matches m
+                    JOIN jobs j ON m.jobId = j.id
+                    WHERE m.userId = ?
+                ";
+                $params = [$userId];
+            }
 
             if ($status) {
                 $sql .= " AND m.status = ?";

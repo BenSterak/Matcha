@@ -158,6 +158,15 @@ class SwipeDeck {
 
     bindEvents() {
         // Button clicks are handled by global functions
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') {
+                this.swipe('right');
+            } else if (e.key === 'ArrowLeft') {
+                this.swipe('left');
+            }
+        });
     }
 
     bindCardEvents(card) {
