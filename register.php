@@ -133,7 +133,7 @@ if ($step == 2 && !isset($_SESSION['register'])) {
     <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
+        function gtag() { dataLayer.push(arguments); }
         gtag('js', new Date());
         gtag('config', 'GA_MEASUREMENT_ID');
 
@@ -353,6 +353,8 @@ if ($step == 2 && !isset($_SESSION['register'])) {
                                     <option value="office">משרד</option>
                                     <option value="remote">עבודה מהבית</option>
                                     <option value="hybrid">היברידי</option>
+                                    <option value="physical">עבודה פיזית</option>
+                                    <option value="field">עבודת שטח</option>
                                 </select>
                             </div>
                         </div>

@@ -129,10 +129,19 @@ class SwipeDeck {
         card.querySelector('.job-card-image').alt = job.title;
         card.querySelector('.job-card-title').textContent = job.title;
         card.querySelector('.job-card-company').textContent = job.company;
-        card.querySelector('.salary-tag span').textContent = job.salaryRange || job.salary || 'לא צוין';
+        card.querySelector('.salary-tag .salary-value').textContent = job.salaryRange || 'לא צוין';
         card.querySelector('.location-tag span').textContent = job.location || 'לא צוין';
         card.querySelector('.type-tag span').textContent = job.type || 'משרה מלאה';
         card.querySelector('.job-description p').textContent = job.description;
+
+        // Populate Match Score (Mock logic for demo)
+        const matchScore = Math.floor(Math.random() * (98 - 75 + 1)) + 75; // Random between 75-98
+        card.querySelector('.score-value').textContent = matchScore + '%';
+
+        // Populate Extra Details (Mock data if missing)
+        card.querySelector('.requirements-value').textContent = job.requirements || (Math.floor(Math.random() * 5) + 1) + '+ שנות ניסיון';
+        const workModels = ['משרד', 'היברידי', 'עבודה פיזית', 'עבודת שטח'];
+        card.querySelector('.work-model-value').textContent = job.workModel || workModels[Math.floor(Math.random() * workModels.length)];
 
         if (!isTop) {
             card.classList.add('card-behind');

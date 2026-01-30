@@ -800,11 +800,159 @@ video {
 .swipe-deck-wrapper {
     position: relative;
     width: 100%;
-    max-width: 380px;
-    height: calc(100vh - 220px);
-    min-height: 400px;
-    max-height: 550px;
+    max-width: 360px;
+    height: 65vh;
+    /* Fixed height for card area */
+    max-height: 600px;
 }
+
+.swipe-card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-xl);
+    background: white;
+    box-shadow: var(--shadow-xl);
+    z-index: 10;
+    transform-origin: 50% 100%;
+    will-change: transform;
+    overflow: hidden;
+    user-select: none;
+}
+
+.swipe-card.card-behind {
+    z-index: 5;
+    background: #f1f5f9;
+    box-shadow: var(--shadow-sm);
+}
+
+/* New Overlays */
+.swipe-indicator {
+    position: absolute;
+    top: 40px;
+    z-index: 50;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border: 3px solid;
+    border-radius: var(--radius-md);
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    opacity: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(4px);
+    box-shadow: var(--shadow-lg);
+    pointer-events: none;
+}
+
+.swipe-indicator span {
+    font-size: 1.5rem;
+}
+
+.swipe-indicator svg {
+    width: 32px;
+    height: 32px;
+}
+
+.swipe-indicator.like {
+    left: 40px;
+    color: var(--like);
+    border-color: var(--like);
+    transform: rotate(-15deg);
+}
+
+.swipe-indicator.nope {
+    right: 40px;
+    color: var(--nope);
+    border-color: var(--nope);
+    transform: rotate(15deg);
+}
+
+/* Match Score Badge */
+.match-score-badge {
+    position: absolute;
+    top: var(--spacing-md);
+    left: var(--spacing-md);
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    color: white;
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--radius-full);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    box-shadow: var(--shadow-md);
+    min-width: 50px;
+}
+
+.score-value {
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.score-label {
+    font-size: 0.625rem;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+/* Grid Details */
+.job-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.detail-item {
+    background: var(--background);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-item .label {
+    font-size: 0.75rem;
+    color: var(--text-light);
+}
+
+.detail-item .value {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--secondary);
+}
+
+/* Swipe Instructions */
+.swipe-instruction {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--border-light);
+    color: var(--text-light);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.instruction-side {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.instruction-side svg {
+    width: 14px;
+    height: 14px;
+}
+
 
 @media (max-height: 700px) {
     .swipe-deck-wrapper {

@@ -124,7 +124,13 @@ try {
                                     <span class="job-tag">
                                         <i data-feather="home" style="width: 12px; height: 12px;"></i>
                                         <?php
-                                        $workModels = ['office' => 'משרד', 'remote' => 'מהבית', 'hybrid' => 'היברידי'];
+                                        $workModels = [
+                                            'office' => 'משרד',
+                                            'remote' => 'מהבית',
+                                            'hybrid' => 'היברידי',
+                                            'physical' => 'עבודה פיזית',
+                                            'field' => 'עבודת שטח'
+                                        ];
                                         echo $workModels[$candidate['workModel']] ?? $candidate['workModel'];
                                         ?>
                                     </span>
@@ -148,8 +154,13 @@ try {
                         </div>
                     <?php else: ?>
                         <div style="display: flex; border-top: 1px solid var(--border);" onclick="event.stopPropagation()">
-                            <a href="mailto:<?php echo htmlspecialchars($candidate['email']); ?>"
+                            <a href="/chat.php?match=<?php echo $candidate['id']; ?>"
                                 style="flex: 1; padding: var(--spacing-md); text-align: center; color: var(--primary); font-weight: 500; text-decoration: none;">
+                                <i data-feather="message-circle" style="width: 16px; height: 16px;"></i>
+                                צ'אט
+                            </a>
+                            <a href="mailto:<?php echo htmlspecialchars($candidate['email']); ?>"
+                                style="flex: 1; padding: var(--spacing-md); text-align: center; color: var(--text-muted); font-weight: 500; text-decoration: none; border-right: 1px solid var(--border);">
                                 <i data-feather="mail" style="width: 16px; height: 16px;"></i>
                                 שליחת מייל
                             </a>
@@ -264,7 +275,14 @@ try {
                 </div>
                 <div style="background: var(--background); padding: var(--spacing-md); border-radius: var(--radius-md);">
                     <div style="color: var(--text-light); font-size: 0.8rem;">מודל עבודה</div>
-                    <div style="font-weight: 600;">${candidate.workModel === 'remote' ? 'מהבית' : (candidate.workModel === 'hybrid' ? 'היברידי' : 'משרד')}</div>
+                    <div style="font-weight: 600;">${{
+                'remote': 'מהבית',
+                'hybrid': 'היברידי',
+                'office': 'משרד',
+                'physical': 'עבודה פיזית',
+                'field': 'עבודת שטח'
+            }[candidate.workModel] || 'משרד'
+            }</div>
                 </div>
             </div>
 

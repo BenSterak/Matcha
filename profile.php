@@ -377,6 +377,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </option>
                             <option value="hybrid" <?php echo $user['workModel'] === 'hybrid' ? 'selected' : ''; ?>>היברידי
                             </option>
+                            <option value="physical" <?php echo $user['workModel'] === 'physical' ? 'selected' : ''; ?>>עבודה
+                                פיזית</option>
+                            <option value="field" <?php echo $user['workModel'] === 'field' ? 'selected' : ''; ?>>עבודת שטח
+                            </option>
+                            </option>
                         </select>
                     </div>
                 </div>

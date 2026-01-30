@@ -10,6 +10,7 @@ if ($isEmployer) {
         ['href' => '/business/dashboard.php', 'icon' => 'home', 'label' => 'ראשי', 'id' => 'dashboard'],
         ['href' => '/business/jobs.php', 'icon' => 'briefcase', 'label' => 'משרות', 'id' => 'jobs'],
         ['href' => '/business/candidates.php', 'icon' => 'users', 'label' => 'מועמדים', 'id' => 'candidates'],
+        ['href' => '/chat.php', 'icon' => 'message-circle', 'label' => 'צ\'אט', 'id' => 'chat'],
         ['href' => '/profile.php', 'icon' => 'user', 'label' => 'פרופיל', 'id' => 'profile'],
     ];
 } else {
@@ -40,10 +41,11 @@ if ($isEmployer) {
             <h1 class="sidebar-title">Matcha</h1>
         </div>
     </div>
-    
+
     <div class="sidebar-menu">
         <?php foreach ($menuItems as $item): ?>
-            <a href="<?php echo $item['href']; ?>" class="sidebar-item <?php echo $currentPage === $item['id'] ? 'active' : ''; ?>">
+            <a href="<?php echo $item['href']; ?>"
+                class="sidebar-item <?php echo $currentPage === $item['id'] ? 'active' : ''; ?>">
                 <i data-feather="<?php echo $item['icon']; ?>"></i>
                 <span><?php echo $item['label']; ?></span>
             </a>
@@ -59,72 +61,78 @@ if ($isEmployer) {
 </aside>
 
 <style>
-/* Sidebar specific styles that might need PHP context or weren't fully in CSS */
-.d-none { display: none !important; }
-@media (min-width: 1024px) {
-    .d-lg-flex { display: flex !important; }
-}
+    /* Sidebar specific styles that might need PHP context or weren't fully in CSS */
+    .d-none {
+        display: none !important;
+    }
 
-.sidebar-header {
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border);
-}
+    @media (min-width: 1024px) {
+        .d-lg-flex {
+            display: flex !important;
+        }
+    }
 
-.logo-container {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
+    .sidebar-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border);
+    }
 
-.sidebar-logo {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    object-fit: cover;
-}
+    .logo-container {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
 
-.sidebar-title {
-    font-size: 1.5rem;
-    color: var(--primary);
-    margin: 0;
-}
+    .sidebar-logo {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        object-fit: cover;
+    }
 
-.sidebar-menu {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    flex: 1;
-}
+    .sidebar-title {
+        font-size: 1.5rem;
+        color: var(--primary);
+        margin: 0;
+    }
 
-.sidebar-item {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 0.75rem 1rem;
-    color: var(--text-muted);
-    border-radius: var(--radius-md);
-    transition: all 0.2s;
-    font-weight: 500;
-}
+    .sidebar-menu {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        flex: 1;
+    }
 
-.sidebar-item:hover {
-    background-color: var(--surface-hover);
-    color: var(--primary);
-    transform: translateX(-4px); /* Hebrew direction */
-}
+    .sidebar-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem 1rem;
+        color: var(--text-muted);
+        border-radius: var(--radius-md);
+        transition: all 0.2s;
+        font-weight: 500;
+    }
 
-.sidebar-item.active {
-    background-color: var(--primary-light);
-    color: var(--primary);
-}
+    .sidebar-item:hover {
+        background-color: var(--surface-hover);
+        color: var(--primary);
+        transform: translateX(-4px);
+        /* Hebrew direction */
+    }
 
-.sidebar-item.logout {
-    color: var(--error);
-}
+    .sidebar-item.active {
+        background-color: var(--primary-light);
+        color: var(--primary);
+    }
 
-.sidebar-item.logout:hover {
-    background-color: var(--error-bg);
-    color: var(--error);
-}
+    .sidebar-item.logout {
+        color: var(--error);
+    }
+
+    .sidebar-item.logout:hover {
+        background-color: var(--error-bg);
+        color: var(--error);
+    }
 </style>
