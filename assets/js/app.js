@@ -37,6 +37,14 @@ const Matcha = {
         }
     },
 
+    // Escape HTML to prevent XSS
+    escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    },
+
     // Format salary
     formatSalary(amount) {
         if (!amount) return 'לא צוין';

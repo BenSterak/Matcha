@@ -86,6 +86,12 @@ if ($matchId) {
             <!-- Messages will be loaded by JavaScript -->
         </div>
 
+        <div id="icebreakerBar" style="padding: 8px 16px; background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(236,72,153,0.08)); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: center;">
+            <button onclick="generateIcebreaker()" id="icebreakerBtn" style="background: linear-gradient(135deg, #8B5CF6, #EC4899); color: white; border: none; padding: 8px 16px; border-radius: var(--radius-full); font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 6px; font-family: inherit;">
+                <i data-feather="sparkles" style="width: 14px; height: 14px;"></i>
+                שובר קרח AI - הציעו משפט פתיחה
+            </button>
+        </div>
         <div class="chat-input-container">
             <input type="text" class="chat-input" placeholder="כתבו הודעה..." id="messageInput"
                 onkeydown="if(event.key === 'Enter') sendMessage()">
@@ -196,6 +202,36 @@ if ($matchId) {
             container.appendChild(messageEl);
             container.scrollTop = container.scrollHeight;
         }
+
+        async function generateIcebreaker() {
+            const btn = document.getElementById('icebreakerBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-dots">מייצר...</span>';
+
+            try {
+                const response = await fetch('/api/ai.php?action=icebreaker', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ matchId: matchId })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('messageInput').value = data.icebreaker;
+                    document.getElementById('messageInput').focus();
+                    // Hide the icebreaker bar after use
+                    document.getElementById('icebreakerBar').style.display = 'none';
+                } else {
+                    alert(data.error || 'שגיאה ביצירת שובר קרח');
+                }
+            } catch (error) {
+                alert('שגיאה בחיבור לשרת');
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i data-feather="sparkles" style="width: 14px; height: 14px;"></i> שובר קרח AI - הציעו משפט פתיחה';
+            feather.replace();
+        }
     </script>
 
 <?php else: ?>
@@ -232,12 +268,12 @@ if ($matchId) {
                     data.matches.forEach(match => {
                         const card = document.createElement('div');
                         card.className = 'match-card';
-                        card.onclick = () => window.location.href = '/chat.php?match=' + match.id;
+                        card.onclick = () => window.location.href = '/chat.php?match=' + parseInt(match.id);
                         card.innerHTML = `
-                    <img class="match-image" src="${match.image || 'https://via.placeholder.com/60'}" alt="${match.title}">
+                    <img class="match-image" src="${Matcha.escapeHtml(match.image) || 'https://via.placeholder.com/60'}" alt="${Matcha.escapeHtml(match.title)}">
                     <div class="match-info">
-                        <h3 class="match-title">${match.title}</h3>
-                        <p class="match-subtitle">${match.company}</p>
+                        <h3 class="match-title">${Matcha.escapeHtml(match.title)}</h3>
+                        <p class="match-subtitle">${Matcha.escapeHtml(match.company)}</p>
                     </div>
                     <i data-feather="message-circle" style="color: var(--primary);"></i>
                 `;

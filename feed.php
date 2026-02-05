@@ -30,6 +30,57 @@ if ($user['role'] === 'employer') {
     </a>
 </header>
 
+<!-- Daily Pick Banner -->
+<div id="dailyPickBanner" style="display: none; margin: var(--spacing-md); padding: 0; border-radius: var(--radius-lg); overflow: hidden; background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #bbf7d0; cursor: pointer;" onclick="swipeDailyPick()">
+    <div style="padding: var(--spacing-md); display: flex; align-items: center; gap: var(--spacing-md);">
+        <div style="width: 56px; height: 56px; border-radius: var(--radius-md); overflow: hidden; flex-shrink: 0;">
+            <img id="dailyPickImage" src="" style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+        <div style="flex: 1; min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
+                <span style="font-size: 0.7rem; background: var(--primary); color: white; padding: 2px 8px; border-radius: var(--radius-full); font-weight: 600;">Daily Pick</span>
+            </div>
+            <h3 id="dailyPickTitle" style="font-size: 0.95rem; font-weight: 600; color: var(--secondary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></h3>
+            <p id="dailyPickCompany" style="font-size: 0.8rem; color: var(--text-muted); margin: 0;"></p>
+        </div>
+        <i data-feather="chevron-left" style="color: var(--primary); flex-shrink: 0;"></i>
+    </div>
+</div>
+
+<script>
+async function loadDailyPick() {
+    try {
+        const response = await fetch('/api/jobs.php?action=daily_pick');
+        const data = await response.json();
+        if (data.success && data.daily_pick) {
+            const pick = data.daily_pick;
+            document.getElementById('dailyPickImage').src = pick.image;
+            document.getElementById('dailyPickTitle').textContent = pick.title;
+            document.getElementById('dailyPickCompany').textContent = pick.company + (pick.location ? ' • ' + pick.location : '');
+            document.getElementById('dailyPickBanner').style.display = 'block';
+            document.getElementById('dailyPickBanner').dataset.jobId = pick.id;
+            feather.replace();
+        }
+    } catch (e) { /* silent */ }
+}
+
+async function swipeDailyPick() {
+    const jobId = document.getElementById('dailyPickBanner').dataset.jobId;
+    if (!jobId) return;
+    try {
+        await fetch('/api/matches.php?action=swipe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jobId: jobId, action: 'like' })
+        });
+        document.getElementById('dailyPickBanner').innerHTML = '<div style="padding: var(--spacing-md); text-align: center; color: var(--success); font-weight: 600;">שמרת את ה-Daily Pick! &#10003;</div>';
+        setTimeout(() => { document.getElementById('dailyPickBanner').style.display = 'none'; }, 2000);
+    } catch (e) { alert('שגיאה'); }
+}
+
+document.addEventListener('DOMContentLoaded', loadDailyPick);
+</script>
+
 <!-- Main Feed -->
 <main class="feed-container">
     <div class="feed-content">

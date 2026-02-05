@@ -154,10 +154,9 @@ if (isset($_SESSION['user_id'])) {
 
     <footer class="landing-footer">
         <div class="footer-links">
-            <a href="#">אודות</a>
-            <a href="#">תנאי שימוש</a>
-            <a href="#">פרטיות</a>
-            <a href="#">צור קשר</a>
+            <a href="/terms.php">תנאי שימוש</a>
+            <a href="/privacy.php">מדיניות פרטיות</a>
+            <a href="/accessibility.php">נגישות</a>
         </div>
         <p>&copy; <?php echo date('Y'); ?> Matcha. כל הזכויות שמורות.</p>
     </footer>

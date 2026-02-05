@@ -7,6 +7,7 @@
 header('Content-Type: application/json; charset=utf-8');
 session_start();
 require_once '../config/db.php';
+require_once '../includes/email.php';
 
 $action = $_GET['action'] ?? '';
 
@@ -61,6 +62,11 @@ switch ($action) {
                 VALUES (?, ?, ?, NOW())
             ");
             $stmt->execute([$userId, $jobId, $status]);
+
+            // Send email notification to employer on new candidate
+            if ($status === 'pending') {
+                notifyNewCandidate($pdo, $jobId, $userId);
+            }
 
             jsonResponse(['success' => true, 'matchId' => $pdo->lastInsertId()]);
         } catch (PDOException $e) {
@@ -179,6 +185,9 @@ switch ($action) {
             // Update status
             $stmt = $pdo->prepare("UPDATE matches SET status = 'matched' WHERE id = ?");
             $stmt->execute([$matchId]);
+
+            // Send email notification to jobseeker about the match
+            notifyMatchApproved($pdo, $matchId);
 
             jsonResponse(['success' => true]);
         } catch (PDOException $e) {

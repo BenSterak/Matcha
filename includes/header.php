@@ -8,16 +8,28 @@ function isLoggedIn()
     return isset($_SESSION['user_id']);
 }
 
-// Helper function to get current user
+// Helper function to get current user (also updates last_seen)
 function getCurrentUser()
 {
     global $pdo;
     if (!isLoggedIn())
         return null;
 
+    // Update last_seen timestamp
+    $updateStmt = $pdo->prepare("UPDATE users SET last_seen = NOW() WHERE id = ?");
+    $updateStmt->execute([$_SESSION['user_id']]);
+
     $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
     $stmt->execute([$_SESSION['user_id']]);
     return $stmt->fetch();
+}
+
+// Check if user is online (active within last 5 minutes)
+function isUserOnline($lastSeen)
+{
+    if (empty($lastSeen)) return false;
+    $lastSeenTime = strtotime($lastSeen);
+    return (time() - $lastSeenTime) < 300; // 5 minutes
 }
 
 // Helper function to require authentication
@@ -25,6 +37,16 @@ function requireAuth()
 {
     if (!isLoggedIn()) {
         header('Location: /login.php');
+        exit;
+    }
+    // Check if user is blocked
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT is_blocked FROM users WHERE id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    $check = $stmt->fetch();
+    if ($check && !empty($check['is_blocked'])) {
+        session_destroy();
+        header('Location: /login.php?blocked=1');
         exit;
     }
 }

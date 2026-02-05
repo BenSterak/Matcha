@@ -188,6 +188,80 @@ switch ($action) {
         }
         break;
 
+    case 'toggle_email':
+        if (!isset($_SESSION['user_id'])) {
+            jsonResponse(['success' => false, 'error' => 'לא מחובר'], 401);
+        }
+
+        $input = json_decode(file_get_contents('php://input'), true);
+        $enabled = !empty($input['enabled']) ? 1 : 0;
+
+        try {
+            $stmt = $pdo->prepare("UPDATE users SET email_notifications = ? WHERE id = ?");
+            $stmt->execute([$enabled, $_SESSION['user_id']]);
+            jsonResponse(['success' => true, 'email_notifications' => $enabled]);
+        } catch (PDOException $e) {
+            jsonResponse(['success' => false, 'error' => 'שגיאת מסד נתונים'], 500);
+        }
+        break;
+
+    case 'delete_account':
+        if (!isset($_SESSION['user_id'])) {
+            jsonResponse(['success' => false, 'error' => 'לא מחובר'], 401);
+        }
+
+        $userId = $_SESSION['user_id'];
+
+        try {
+            $pdo->beginTransaction();
+
+            // Delete messages related to user's matches
+            $stmt = $pdo->prepare("
+                DELETE msg FROM messages msg
+                INNER JOIN matches m ON msg.matchId = m.id
+                WHERE m.userId = ?
+            ");
+            $stmt->execute([$userId]);
+
+            // Delete messages related to employer's jobs
+            $stmt = $pdo->prepare("
+                DELETE msg FROM messages msg
+                INNER JOIN matches m ON msg.matchId = m.id
+                INNER JOIN jobs j ON m.jobId = j.id
+                WHERE j.business_id = ?
+            ");
+            $stmt->execute([$userId]);
+
+            // Delete user's matches
+            $stmt = $pdo->prepare("DELETE FROM matches WHERE userId = ?");
+            $stmt->execute([$userId]);
+
+            // Delete matches on employer's jobs
+            $stmt = $pdo->prepare("
+                DELETE m FROM matches m
+                INNER JOIN jobs j ON m.jobId = j.id
+                WHERE j.business_id = ?
+            ");
+            $stmt->execute([$userId]);
+
+            // Delete employer's jobs
+            $stmt = $pdo->prepare("DELETE FROM jobs WHERE business_id = ?");
+            $stmt->execute([$userId]);
+
+            // Delete user record
+            $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
+            $stmt->execute([$userId]);
+
+            $pdo->commit();
+            session_destroy();
+
+            jsonResponse(['success' => true, 'message' => 'החשבון נמחק בהצלחה']);
+        } catch (PDOException $e) {
+            $pdo->rollBack();
+            jsonResponse(['success' => false, 'error' => 'שגיאה במחיקת החשבון'], 500);
+        }
+        break;
+
     default:
         jsonResponse(['success' => false, 'error' => 'פעולה לא חוקית'], 400);
 }

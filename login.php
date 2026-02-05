@@ -24,18 +24,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user = $stmt->fetch();
 
             if ($user && password_verify($password, $user['password'])) {
-                // Login successful
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['user_role'] = $user['role'];
-                $_SESSION['user_name'] = $user['name'];
-
-                // Redirect based on role
-                if ($user['role'] === 'employer') {
-                    header('Location: /business/dashboard.php');
+                // Check if user is blocked
+                if (!empty($user['is_blocked'])) {
+                    $error = 'החשבון שלך נחסם. פנה לתמיכה לפרטים נוספים.';
                 } else {
-                    header('Location: /feed.php');
+                    // Login successful
+                    $_SESSION['user_id'] = $user['id'];
+                    $_SESSION['user_role'] = $user['role'];
+                    $_SESSION['user_name'] = $user['name'];
+
+                    // Redirect based on role
+                    if (!empty($user['is_admin'])) {
+                        header('Location: /admin/');
+                    } elseif ($user['role'] === 'employer') {
+                        header('Location: /business/dashboard.php');
+                    } else {
+                        header('Location: /feed.php');
+                    }
+                    exit;
                 }
-                exit;
             } else {
                 $error = 'אימייל או סיסמה שגויים';
             }

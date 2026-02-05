@@ -7,6 +7,7 @@
 header('Content-Type: application/json; charset=utf-8');
 session_start();
 require_once '../config/db.php';
+require_once '../includes/email.php';
 
 // Check authentication
 if (!isset($_SESSION['user_id'])) {
@@ -56,6 +57,9 @@ switch ($action) {
             ");
             $stmt->execute([$matchId, $userId, $content]);
             $messageId = $pdo->lastInsertId();
+
+            // Send email notification to recipient (if offline)
+            notifyNewMessage($pdo, $matchId, $userId, $content);
 
             echo json_encode([
                 'success' => true,

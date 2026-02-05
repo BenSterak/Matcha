@@ -163,6 +163,99 @@ switch ($action) {
         ], JSON_UNESCAPED_UNICODE);
         break;
 
+    case 'icebreaker':
+        // Generate icebreaker message for chat
+        $input = json_decode(file_get_contents('php://input'), true);
+        $matchId = intval($input['matchId'] ?? 0);
+
+        if (!$matchId) {
+            echo json_encode(['success' => false, 'error' => 'Match ID required'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
+        try {
+            // Get match context (job title + candidate/employer bio)
+            $stmt = $pdo->prepare("
+                SELECT j.title as jobTitle, j.description as jobDesc, j.company,
+                       u.name as candidateName, u.bio as candidateBio, u.field as candidateField
+                FROM matches m
+                JOIN jobs j ON m.jobId = j.id
+                JOIN users u ON m.userId = u.id
+                WHERE m.id = ? AND m.status = 'matched'
+            ");
+            $stmt->execute([$matchId]);
+            $matchData = $stmt->fetch();
+
+            if (!$matchData) {
+                echo json_encode(['success' => false, 'error' => 'Match not found'], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+
+            // Check user role
+            $stmt = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+            $stmt->execute([$userId]);
+            $role = $stmt->fetchColumn();
+
+            if ($role === 'employer') {
+                $prompt = "אתה עוזר למעסיק לפתוח שיחה עם מועמד שהתאמתם ביניהם באפליקציית גיוס.
+
+פרטי המשרה: {$matchData['jobTitle']}
+שם המועמד: {$matchData['candidateName']}
+על המועמד: {$matchData['candidateBio']}
+תחום: {$matchData['candidateField']}
+
+כתוב הודעת פתיחה קצרה (1-2 משפטים) בעברית שתהיה:
+- חמה ומקצועית
+- מזמינה ולא פורמלית מדי
+- מתייחסת למשרה הספציפית
+- מעודדת תגובה
+
+החזר רק את ההודעה, ללא הסברים.";
+            } else {
+                $prompt = "אתה עוזר למועמד לפתוח שיחה עם מעסיק שהתאמתם ביניהם באפליקציית גיוס.
+
+המשרה: {$matchData['jobTitle']}
+החברה: {$matchData['company']}
+
+כתוב הודעת פתיחה קצרה (1-2 משפטים) בעברית שתהיה:
+- מקצועית אך חמה
+- מביעה התלהבות אמיתית מהמשרה
+- לא מוגזמת או חנפנית
+- מעודדת תגובה
+
+החזר רק את ההודעה, ללא הסברים.";
+            }
+
+            $result = callGemini($prompt);
+
+            if (isset($result['error'])) {
+                // Fallback icebreakers
+                $fallbacks = $role === 'employer'
+                    ? [
+                        "היי {$matchData['candidateName']}, שמחנו לראות את הפרופיל שלך! נשמח לשוחח על המשרה {$matchData['jobTitle']}.",
+                        "שלום {$matchData['candidateName']}! הפרופיל שלך תפס את העין שלנו. רוצה לשמוע עוד על התפקיד?",
+                        "היי! ראינו את הפרופיל שלך ואנחנו חושבים שיכולה להיות כאן התאמה מעולה. מתי נוח לדבר?"
+                    ]
+                    : [
+                        "היי! שמח/ה מאוד על ההתאמה. המשרה {$matchData['jobTitle']} נשמעת ממש מעניינת!",
+                        "שלום! תודה על ההתאמה. אשמח לשמוע עוד על התפקיד ועל הצוות.",
+                        "היי! ההתאמה שמחה אותי. אשמח לדבר ולשמוע עוד על מה שאתם מחפשים."
+                    ];
+                $icebreaker = $fallbacks[array_rand($fallbacks)];
+            } else {
+                $icebreaker = trim($result['text']);
+            }
+
+            echo json_encode([
+                'success' => true,
+                'icebreaker' => $icebreaker
+            ], JSON_UNESCAPED_UNICODE);
+
+        } catch (PDOException $e) {
+            echo json_encode(['success' => false, 'error' => 'Database error'], JSON_UNESCAPED_UNICODE);
+        }
+        break;
+
     default:
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Invalid action'], JSON_UNESCAPED_UNICODE);

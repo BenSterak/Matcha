@@ -50,12 +50,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $jobSeekerDetails = [
                     'resume_file' => $_POST['resume_file'] ?? ($user['resume_file'] ?? ''),
-                    'portfolio_url' => $_POST['portfolio_url'] ?? '',
-                    'linkedin_url' => $_POST['linkedin_url'] ?? ''
+                    'portfolio_url' => $_POST['portfolio_url'] ?? ''
                 ];
 
-                $sql = "UPDATE users SET name=?, bio=?, photo=?, field=?, salary=?, workModel=?, 
-                        resume_file=?, portfolio_url=?, linkedin_url=? 
+                $sql = "UPDATE users SET name=?, bio=?, photo=?, field=?, salary=?, workModel=?,
+                        resume_file=?, portfolio_url=?
                         WHERE id=?";
                 $params = [
                     $name,
@@ -66,7 +65,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $workModel,
                     $jobSeekerDetails['resume_file'],
                     $jobSeekerDetails['portfolio_url'],
-                    $jobSeekerDetails['linkedin_url'],
                     $_SESSION['user_id']
                 ];
             }
@@ -106,6 +104,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <p class="profile-email">
             <?php echo htmlspecialchars($user['email']); ?>
         </p>
+    </div>
+
+    <?php
+    // Calculate profile strength
+    $profileFields = [];
+    if ($user['role'] === 'employer') {
+        $profileFields = [
+            'name' => !empty($user['name']),
+            'bio' => !empty($user['bio']),
+            'photo' => !empty($user['photo']),
+            'company_name' => !empty($user['company_name']),
+            'company_website' => !empty($user['company_website']),
+            'company_location' => !empty($user['company_location']),
+            'company_size' => !empty($user['company_size']),
+            'company_cover' => !empty($user['company_cover']),
+        ];
+    } else {
+        $profileFields = [
+            'name' => !empty($user['name']),
+            'bio' => !empty($user['bio']),
+            'photo' => !empty($user['photo']),
+            'field' => !empty($user['field']),
+            'salary' => !empty($user['salary']),
+            'workModel' => !empty($user['workModel']),
+            'resume_file' => !empty($user['resume_file']),
+            'portfolio_url' => !empty($user['portfolio_url']),
+        ];
+    }
+    $filledCount = count(array_filter($profileFields));
+    $totalCount = count($profileFields);
+    $profileStrength = round(($filledCount / $totalCount) * 100);
+
+    $strengthColor = $profileStrength >= 80 ? 'var(--success)' : ($profileStrength >= 50 ? 'var(--warning)' : 'var(--error)');
+    $strengthLabel = $profileStrength >= 80 ? 'פרופיל חזק!' : ($profileStrength >= 50 ? 'כמעט שם...' : 'השלימו את הפרופיל');
+    ?>
+
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--spacing-md); margin-bottom: var(--spacing-lg);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm);">
+            <span style="font-size: 0.875rem; font-weight: 600; color: var(--secondary);">חוזק הפרופיל</span>
+            <span style="font-size: 0.875rem; font-weight: 700; color: <?php echo $strengthColor; ?>;"><?php echo $profileStrength; ?>%</span>
+        </div>
+        <div style="background: var(--border); border-radius: var(--radius-full); height: 8px; overflow: hidden;">
+            <div style="background: <?php echo $strengthColor; ?>; height: 100%; width: <?php echo $profileStrength; ?>%; border-radius: var(--radius-full); transition: width 0.5s ease;"></div>
+        </div>
+        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: var(--spacing-xs);"><?php echo $strengthLabel; ?> (<?php echo $filledCount; ?>/<?php echo $totalCount; ?> שדות)</p>
     </div>
 
     <?php if ($success): ?>
@@ -210,25 +253,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         required style="padding-right: var(--spacing-md);">
                 </div>
 
-                <div class="form-groups-row" style="display: flex; gap: var(--spacing-md);">
-                    <div class="form-group" style="flex: 1; margin-bottom: var(--spacing-md);">
-                        <label class="form-label">לינקדאין (LinkedIn)</label>
-                        <div class="input-wrapper">
-                            <i data-feather="linkedin"></i>
-                            <input type="url" name="linkedin_url" class="form-input"
-                                value="<?php echo htmlspecialchars($user['linkedin_url'] ?? ''); ?>"
-                                placeholder="https://linkedin.com/in/...">
-                        </div>
-                    </div>
-
-                    <div class="form-group" style="flex: 1; margin-bottom: var(--spacing-md);">
-                        <label class="form-label">תיק עבודות / אתר</label>
-                        <div class="input-wrapper">
-                            <i data-feather="globe"></i>
-                            <input type="url" name="portfolio_url" class="form-input"
-                                value="<?php echo htmlspecialchars($user['portfolio_url'] ?? ''); ?>"
-                                placeholder="https://myportfolio.com">
-                        </div>
+                <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                    <label class="form-label">תיק עבודות / אתר</label>
+                    <div class="input-wrapper">
+                        <i data-feather="globe"></i>
+                        <input type="url" name="portfolio_url" class="form-input"
+                            value="<?php echo htmlspecialchars($user['portfolio_url'] ?? ''); ?>"
+                            placeholder="https://myportfolio.com">
                     </div>
                 </div>
 
@@ -393,6 +424,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </button>
     </form>
 
+    <!-- Email Notifications Toggle -->
+    <div class="profile-section" style="margin-top: var(--spacing-lg);">
+        <h3 class="profile-section-title">
+            <i data-feather="bell" style="width: 18px; height: 18px;"></i>
+            התראות
+        </h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--spacing-md);">
+            <div>
+                <p style="font-weight: 500; margin: 0;">התראות במייל</p>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 0;">קבלת עדכונים על התאמות והודעות חדשות</p>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" id="emailToggle" <?php echo !empty($user['email_notifications']) ? 'checked' : ''; ?>
+                    onchange="toggleEmailNotifications(this.checked)">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <style>
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 28px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--border);
+            border-radius: 28px;
+            transition: 0.3s;
+        }
+        .toggle-slider::before {
+            content: "";
+            position: absolute;
+            height: 22px;
+            width: 22px;
+            right: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .toggle-switch input:checked + .toggle-slider {
+            background: var(--primary);
+        }
+        .toggle-switch input:checked + .toggle-slider::before {
+            transform: translateX(-20px);
+        }
+    </style>
+
     <script>
         function submitProfileForm(btn) {
             // Basic validation
@@ -464,11 +555,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     </script>
 
-    <div style="margin-top: var(--spacing-xxl); text-align: center;">
+    <div style="margin-top: var(--spacing-xxl); text-align: center; display: flex; flex-direction: column; align-items: center; gap: var(--spacing-md);">
         <a href="logout.php" class="btn btn-ghost" style="color: var(--error);">
             <i data-feather="log-out" style="width: 18px; height: 18px;"></i>
             התנתקות
         </a>
+        <button type="button" onclick="deleteAccount()" class="btn btn-ghost" style="color: var(--text-light); font-size: 0.8rem;">
+            <i data-feather="trash-2" style="width: 14px; height: 14px;"></i>
+            מחיקת חשבון
+        </button>
     </div>
 </main>
 
@@ -663,6 +758,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         setTimeout(() => {
             aiStatus.style.display = 'none';
         }, 5000);
+    }
+
+    async function toggleEmailNotifications(enabled) {
+        try {
+            const response = await fetch('/api/auth.php?action=toggle_email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled: enabled })
+            });
+            const data = await response.json();
+            if (data.success) {
+                Matcha.showToast(enabled ? 'התראות מייל הופעלו' : 'התראות מייל כובו', 'success');
+            } else {
+                // Revert toggle
+                document.getElementById('emailToggle').checked = !enabled;
+                Matcha.showToast(data.error || 'שגיאה', 'error');
+            }
+        } catch (error) {
+            document.getElementById('emailToggle').checked = !enabled;
+            Matcha.showToast('שגיאה בחיבור לשרת', 'error');
+        }
+    }
+
+    async function deleteAccount() {
+        if (!confirm('האם אתם בטוחים שברצונכם למחוק את החשבון? פעולה זו בלתי הפיכה.')) {
+            return;
+        }
+        if (!confirm('שימו לב: כל המידע, ההתאמות וההודעות שלכם יימחקו לצמיתות. להמשיך?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/auth.php?action=delete_account', {
+                method: 'POST'
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                alert('החשבון נמחק בהצלחה. להתראות!');
+                window.location.href = '/index.php';
+            } else {
+                alert(data.error || 'שגיאה במחיקת החשבון');
+            }
+        } catch (error) {
+            alert('שגיאה בחיבור לשרת');
+        }
     }
 </script>
 

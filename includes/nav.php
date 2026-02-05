@@ -2,6 +2,7 @@
 // Navigation Component - Responsive (Bottom Nav for Mobile, Sidebar for Desktop)
 $user = getCurrentUser();
 $isEmployer = $user && $user['role'] === 'employer';
+$isAdmin = $user && !empty($user['is_admin']);
 
 // Define menu items based on role
 $menuItems = [];
@@ -31,6 +32,12 @@ if ($isEmployer) {
             <span><?php echo $item['label']; ?></span>
         </a>
     <?php endforeach; ?>
+    <?php if ($isAdmin): ?>
+        <a href="/admin/" class="nav-item" style="color: var(--error);">
+            <i data-feather="shield"></i>
+            <span>ניהול</span>
+        </a>
+    <?php endif; ?>
 </nav>
 
 <!-- Desktop Sidebar (Hidden on Mobile) -->
@@ -53,6 +60,12 @@ if ($isEmployer) {
     </div>
 
     <div class="sidebar-footer">
+        <?php if ($isAdmin): ?>
+            <a href="/admin/" class="sidebar-item <?php echo $currentPage === 'index' && strpos($_SERVER['PHP_SELF'], '/admin/') !== false ? 'active' : ''; ?>" style="color: var(--error); font-weight: 600;">
+                <i data-feather="shield"></i>
+                <span>ניהול</span>
+            </a>
+        <?php endif; ?>
         <a href="/logout.php" class="sidebar-item logout">
             <i data-feather="log-out"></i>
             <span>התנתק</span>

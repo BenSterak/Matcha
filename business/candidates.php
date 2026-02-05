@@ -18,7 +18,7 @@ try {
 try {
     $sql = "
         SELECT m.*, u.name, u.email, u.bio, u.photo, u.field, u.salary as expectedSalary, u.workModel,
-               u.resume_file, u.portfolio_url, u.linkedin_url,
+               u.resume_file, u.portfolio_url, u.last_seen,
                j.title as jobTitle, j.id as jobId
         FROM matches m
         JOIN users u ON m.userId = u.id
@@ -90,8 +90,11 @@ try {
                             style="width: 70px; height: 70px; border-radius: var(--radius-full); object-fit: cover;">
                         <div style="flex: 1;">
                             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                <h3 style="font-size: 1rem; font-weight: 600; color: var(--secondary);">
+                                <h3 style="font-size: 1rem; font-weight: 600; color: var(--secondary); display: flex; align-items: center; gap: 6px;">
                                     <?php echo htmlspecialchars($candidate['name']); ?>
+                                    <?php if (isUserOnline($candidate['last_seen'] ?? null)): ?>
+                                        <span style="width: 8px; height: 8px; background: var(--success); border-radius: 50%; display: inline-block;" title="מחובר/ת"></span>
+                                    <?php endif; ?>
                                 </h3>
                                 <span class="match-status <?php echo $candidate['status']; ?>">
                                     <?php echo $candidate['status'] === 'matched' ? 'התאמה!' : 'ממתין'; ?>
@@ -248,20 +251,30 @@ try {
         const body = document.getElementById('modalBody');
         const footer = document.getElementById('modalFooter');
 
+        const esc = Matcha.escapeHtml;
+        const workModelLabels = {
+            'remote': 'מהבית', 'hybrid': 'היברידי', 'office': 'משרד',
+            'physical': 'עבודה פיזית', 'field': 'עבודת שטח'
+        };
+        const onlineDot = candidate.last_seen && (Date.now() - new Date(candidate.last_seen).getTime()) < 300000
+            ? '<span style="width:8px;height:8px;background:var(--success);border-radius:50%;display:inline-block;" title="מחובר/ת"></span>' : '';
+
         // Populate Body
         body.innerHTML = `
             <div style="display: flex; align-items: center; gap: var(--spacing-md); margin-bottom: var(--spacing-lg);">
-                <img src="${candidate.photo || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(candidate.name)}" 
+                <img src="${esc(candidate.photo) || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(candidate.name)}"
                      style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
                 <div>
-                    <h2 style="margin: 0; font-size: 1.25rem;">${candidate.name}</h2>
-                    <p style="color: var(--primary); margin: 0;">${candidate.jobTitle}</p>
+                    <h2 style="margin: 0; font-size: 1.25rem; display: flex; align-items: center; gap: 6px;">
+                        ${esc(candidate.name)} ${onlineDot}
+                    </h2>
+                    <p style="color: var(--primary); margin: 0;">${esc(candidate.jobTitle)}</p>
                 </div>
             </div>
 
             <div style="margin-bottom: var(--spacing-lg);">
                 <h4 style="margin-bottom: var(--spacing-sm);">על עצמי</h4>
-                <p style="color: var(--text-muted); line-height: 1.6;">${candidate.bio || 'אין מידע נוסף'}</p>
+                <p style="color: var(--text-muted); line-height: 1.6;">${esc(candidate.bio) || 'אין מידע נוסף'}</p>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); margin-bottom: var(--spacing-lg);">
@@ -271,39 +284,27 @@ try {
                 </div>
                 <div style="background: var(--background); padding: var(--spacing-md); border-radius: var(--radius-md);">
                     <div style="color: var(--text-light); font-size: 0.8rem;">תחום</div>
-                    <div style="font-weight: 600;">${candidate.field || '-'}</div>
+                    <div style="font-weight: 600;">${esc(candidate.field) || '-'}</div>
                 </div>
                 <div style="background: var(--background); padding: var(--spacing-md); border-radius: var(--radius-md);">
                     <div style="color: var(--text-light); font-size: 0.8rem;">מודל עבודה</div>
-                    <div style="font-weight: 600;">${{
-                'remote': 'מהבית',
-                'hybrid': 'היברידי',
-                'office': 'משרד',
-                'physical': 'עבודה פיזית',
-                'field': 'עבודת שטח'
-            }[candidate.workModel] || 'משרד'
-            }</div>
+                    <div style="font-weight: 600;">${workModelLabels[candidate.workModel] || 'משרד'}</div>
                 </div>
             </div>
 
             <h4 style="margin-bottom: var(--spacing-sm);">מסמכים וקישורים</h4>
             <div style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
                 ${candidate.resume_file ? `
-                    <a href="${candidate.resume_file}" target="_blank" class="btn btn-secondary w-full" style="justify-content: flex-start;">
+                    <a href="${esc(candidate.resume_file)}" target="_blank" class="btn btn-secondary w-full" style="justify-content: flex-start;">
                         <i data-feather="file-text"></i> צפייה בקורות חיים
                     </a>
                 ` : ''}
-                ${candidate.linkedin_url ? `
-                    <a href="${candidate.linkedin_url}" target="_blank" class="btn btn-secondary w-full" style="justify-content: flex-start;">
-                        <i data-feather="linkedin"></i> פרופיל LinkedIn
-                    </a>
-                ` : ''}
                 ${candidate.portfolio_url ? `
-                    <a href="${candidate.portfolio_url}" target="_blank" class="btn btn-secondary w-full" style="justify-content: flex-start;">
+                    <a href="${esc(candidate.portfolio_url)}" target="_blank" class="btn btn-secondary w-full" style="justify-content: flex-start;">
                         <i data-feather="globe"></i> תיק עבודות / אתר
                     </a>
                 ` : ''}
-                ${!candidate.resume_file && !candidate.linkedin_url && !candidate.portfolio_url ? '<p style="color: var(--text-muted);">אין קישורים נוספים</p>' : ''}
+                ${!candidate.resume_file && !candidate.portfolio_url ? '<p style="color: var(--text-muted);">אין קישורים נוספים</p>' : ''}
             </div>
         `;
 
@@ -322,7 +323,7 @@ try {
                 <a href="/chat.php?match=${candidate.id}" class="btn btn-primary w-full" style="background: var(--primary);">
                     <i data-feather="message-circle"></i> מעבר לצ'אט
                 </a>
-                <a href="mailto:${candidate.email}" class="btn w-full" style="background: var(--surface); color: var(--primary); border: 1px solid var(--border);">
+                <a href="mailto:${Matcha.escapeHtml(candidate.email)}" class="btn w-full" style="background: var(--surface); color: var(--primary); border: 1px solid var(--border);">
                     <i data-feather="mail"></i> שליחת מייל
                 </a>
             `;

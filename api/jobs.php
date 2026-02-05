@@ -45,7 +45,8 @@ switch ($action) {
                 ");
                 $stmt->execute([$userId]);
             } else {
-                $stmt = $pdo->query("SELECT * FROM jobs ORDER BY createdAt DESC LIMIT 50");
+                $stmt = $pdo->prepare("SELECT * FROM jobs ORDER BY createdAt DESC LIMIT 50");
+                $stmt->execute();
             }
 
             $jobs = $stmt->fetchAll();
@@ -237,6 +238,56 @@ switch ($action) {
             jsonResponse(['success' => true]);
         } catch (PDOException $e) {
             jsonResponse(['success' => false, 'error' => 'Failed to delete job'], 500);
+        }
+        break;
+
+    case 'daily_pick':
+        // Get daily featured job for the user
+        $userId = requireAuth();
+
+        try {
+            // Use the current date as seed for consistent daily selection
+            $today = date('Y-m-d');
+            $seed = crc32($today . '-' . $userId);
+
+            // Get a job the user hasn't swiped on, deterministically chosen for today
+            $stmt = $pdo->prepare("
+                SELECT j.*,
+                       (SELECT COUNT(*) FROM matches WHERE jobId = j.id AND status IN ('pending','matched')) as interest_count
+                FROM jobs j
+                WHERE j.id NOT IN (
+                    SELECT m.jobId FROM matches m WHERE m.userId = ?
+                )
+                ORDER BY j.createdAt DESC
+                LIMIT 20
+            ");
+            $stmt->execute([$userId]);
+            $candidates = $stmt->fetchAll();
+
+            if (empty($candidates)) {
+                jsonResponse(['success' => true, 'daily_pick' => null]);
+            }
+
+            // Pick one deterministically based on date+user
+            $pickIndex = abs($seed) % count($candidates);
+            $pick = $candidates[$pickIndex];
+
+            jsonResponse([
+                'success' => true,
+                'daily_pick' => [
+                    'id' => $pick['id'],
+                    'title' => $pick['title'],
+                    'company' => $pick['company'],
+                    'description' => $pick['description'],
+                    'location' => $pick['location'],
+                    'salaryRange' => $pick['salaryRange'],
+                    'type' => $pick['type'],
+                    'image' => $pick['image'] ?: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=500',
+                    'interest_count' => $pick['interest_count']
+                ]
+            ]);
+        } catch (PDOException $e) {
+            jsonResponse(['success' => false, 'error' => 'Database error'], 500);
         }
         break;
 

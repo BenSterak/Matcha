@@ -1,5 +1,8 @@
 # Matcha - Apache Configuration
 
+# Custom error pages
+ErrorDocument 404 /404.php
+
 # Enable URL rewriting
 <IfModule mod_rewrite.c>
     RewriteEngine On
@@ -25,7 +28,7 @@
 Options -Indexes
 
 # Protect sensitive files
-<FilesMatch "^(\.htaccess|\.env|config\.php|db\.php)$">
+<FilesMatch "^(\.htaccess|\.env|config\.php|db\.php|mail\.php)$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>

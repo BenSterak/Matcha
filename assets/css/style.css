@@ -2241,56 +2241,79 @@ video {
         display: none !important;
     }
 
-    /* Layout Change */
+    /* Override 768px body centering for full desktop layout */
+    body {
+        display: block;
+        padding: 0;
+        background: #f8fafc;
+    }
+
+    /* Layout Change - Full width with sidebar */
     .app-container {
         flex-direction: row;
-        max-width: 1400px;
-        margin: 0 auto;
+        max-width: 100%;
+        width: 100%;
+        margin: 0;
         min-height: 100vh;
-        overflow: hidden;
-        /* containment */
+        height: auto;
+        max-height: none;
+        border-radius: 0;
+        overflow: visible;
+        border: none;
+        background: var(--background);
     }
 
-    .main-content {
+    /* Main content takes remaining space */
+    .main-content,
+    .feed-container,
+    .profile-page,
+    .matches-page,
+    .chat-page {
         flex: 1;
-        padding: 3rem;
-        max-width: none;
+        max-width: calc(100% - 280px);
         overflow-y: auto;
-        height: 100vh;
+        min-height: 100vh;
+        padding: 2rem 3rem;
     }
 
-    /* Sidebar Visible */
+    /* Sidebar Visible - Fixed left for RTL */
     .desktop-sidebar {
         display: flex;
         width: 280px;
+        min-width: 280px;
         background: #fff;
-        border-right: 1px solid #e2e8f0;
+        border-left: 1px solid #e2e8f0;
         height: 100vh;
         position: sticky;
         top: 0;
         flex-direction: column;
         padding: 2rem;
         z-index: 100;
-        order: -1;
-        /* RTL support */
     }
 
-    /* Hide Bottom Nav */
+    /* Hide Bottom Nav on Desktop */
     .bottom-nav {
         display: none !important;
     }
 
-    /* Hide Mobile Header */
+    /* Hide Mobile Header on Desktop */
     .header {
         display: none !important;
     }
 
-    /* Split Screen Auth */
+    /* Hide footer on desktop (it's in wrong position) */
+    .landing-footer {
+        position: relative;
+    }
+
+    /* Split Screen Auth - Centered layout */
     .auth-page,
     .welcome-page {
-        flex-direction: row;
-        align-items: stretch;
-        background: #fff;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #f8fafc 100%);
+        min-height: 100vh;
     }
 
     .welcome-decor {
@@ -2299,23 +2322,22 @@ video {
 
     .auth-page::before,
     .welcome-page::before {
-        content: '';
-        flex: 1;
-        background: url('../images/login-hero.jpg'), linear-gradient(135deg, #10B981, #059669);
-        background-size: cover;
-        background-position: center;
-        display: block;
-        order: -1;
+        display: none;
     }
 
     .auth-content,
     .welcome-content {
-        flex: 0 0 550px;
-        max-width: 550px;
+        flex: none;
+        width: 100%;
+        max-width: 500px;
         display: flex;
         flex-direction: column;
         justify-content: center;
         padding: 4rem;
+        background: var(--surface);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-xl);
+        margin: 2rem;
     }
 
     /* Dashboard Grid Desktop */
@@ -2324,27 +2346,46 @@ video {
         gap: 2rem;
     }
 
-    /* Feed & Matches Desktop */
+    /* Feed Desktop - Larger cards */
     .feed-container {
         display: flex;
         justify-content: center;
-        align-items: center;
-        height: 100vh;
+        align-items: flex-start;
+        padding-top: 2rem;
+        min-height: calc(100vh - 4rem);
     }
 
     .feed-content {
-        margin-top: -60px;
-        /* offset header */
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .swipe-deck {
+        height: auto;
+        min-height: 70vh;
     }
 
     .swipe-deck-wrapper {
-        height: 600px;
+        width: 100%;
+        max-width: 500px;
+        height: 650px;
+        margin: 0 auto;
     }
 
-    /* Matches Page */
+    .job-card {
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-xl);
+    }
+
+    /* Matches Page Desktop */
+    .matches-page {
+        padding: 2rem 3rem;
+    }
+
     .matches-list {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
         gap: 1.5rem;
     }
 
@@ -2371,16 +2412,39 @@ video {
         left: 10px;
     }
 
-    /* Profile Desktop */
+    /* Profile Desktop - Two column layout */
     .profile-page {
-        display: grid;
-        grid-template-columns: 320px 1fr;
+        display: flex;
+        flex-direction: row;
         gap: 3rem;
-        align-items: start;
+        align-items: flex-start;
+        padding: 2rem 3rem;
     }
 
     .profile-header {
         position: sticky;
         top: 2rem;
+        flex: 0 0 320px;
+    }
+
+    .profile-content {
+        flex: 1;
+    }
+
+    /* Chat Desktop */
+    .chat-page {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-messages {
+        flex: 1;
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
+
+    /* Empty states - center nicely */
+    .empty-state {
+        padding: 4rem 2rem;
     }
 }
